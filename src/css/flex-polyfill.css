@@ -1,0 +1,19 @@
+.nav-link{
+
+    display:inline-block !important;
+}
+.navbar-nav.mr-auto
+{
+    display:inline-block;
+  margin-right:0 !important
+}
+.nav-item {
+    float:left;
+    display:inline-block !important;
+}
+@media (min-width: 1000px) {
+    .collapse.navbar-collapse.navbar-toggleable-sm.show
+    {
+        display: inline-block !important;
+    }
+}

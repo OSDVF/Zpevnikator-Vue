@@ -1,0 +1,23 @@
+{
+	"sEmptyTable":     "Nepodařilo se načíst žádné písně",
+	"sInfo":           "Zobrazuji _START_ až _END_ z celkem _TOTAL_ písní",
+	"sInfoEmpty":      "Zobrazuji 0 až 0 z 0 písní",
+	"sInfoFiltered":   "(filtrováno z celkem _MAX_ písní)",
+	"sInfoPostFix":    "",
+	"sInfoThousands":  " ",
+	"sLengthMenu":     "Zobraz písní _MENU_",
+	"sLoadingRecords": "Načítám...",
+	"sProcessing":     "Provádím...",
+	"sSearch":         "Hledat:",
+	"sZeroRecords":    "Žádná z písní neodpovídá hledanému dotazu",
+	"oPaginate": {
+		"sFirst":    "První",
+		"sLast":     "Poslední",
+		"sNext":     "Další",
+		"sPrevious": "Předchozí"
+	},
+	"oAria": {
+		"sSortAscending":  ": aktivujte pro řazení sloupce vzestupně",
+		"sSortDescending": ": aktivujte pro řazení sloupce sestupně"
+	}
+}
