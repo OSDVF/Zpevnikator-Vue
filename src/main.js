@@ -6,11 +6,14 @@ import './registerServiceWorker'
 import router from './router'
 import store from './store'
 import globalManager from './js/global';
-window.globalManager = globalManager;
-Vue.config.productionTip = false
 
-new Vue({
+window.globalManager = globalManager;
+Vue.config.productionTip = true;
+
+const appInstance = new Vue({
   router,
   store,
   render: h => h(App)
-}).$mount('#app')
+});
+globalManager.Vue = appInstance;
+appInstance.$mount('#app');

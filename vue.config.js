@@ -3,7 +3,7 @@ process.env.VUE_APP_VERSION = version;
 
 module.exports = {
   publicPath: "./",
-  css:{
+  css: {
     sourceMap: true
   },
   pwa: {

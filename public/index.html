@@ -2,92 +2,100 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8">
-  <title>Dorostomládežový Zpěvníkátor</title>
-  <meta name='description' content='Songbook system project by Dorostmladez.cz'>
-  <meta name='author' content='O.S.DV.F'>
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-  <link href='images/icon-32.png' rel='shortcut icon' type='image/png'>
-  <meta name="format-detection" content="telephone=no">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+      <meta charset="utf-8">
+      <title>Dorostomládežový Zpěvníkátor</title>
+      <meta name='description' content='Songbook system project by Dorostmladez.cz'>
+      <meta name='author' content='O.S.DV.F'>
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+      <link href='images/icon-32.png' rel='shortcut icon' type='image/png'>
+      <meta name="format-detection" content="telephone=no">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-  <!-- External styles -->
-  <link rel="preload" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" as="style">
-  
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous" defer></script>
-  <script data-cfasync="false" src="js/material.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.2.0/js.cookie.min.js" crossorigin="anonymous" defer>
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" crossorigin="anonymous"
-          defer></script>
-  <script data-cfasync="false" src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
-          crossorigin="anonymous" defer></script>
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.12/css/bootstrap-select.min.css"
-        crossorigin="anonymous" defer>
-  <script data-cfasync="false" type="text/javascript" charset="utf8"
-          src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js" crossorigin="anonymous" defer></script>
-  <script data-cfasync="false" type="text/javascript" charset="utf8"
-          src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"
-          defer></script>
-  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.12/css/bootstrap-select.min.css" crossorigin="anonymous">
-  <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.12/js/bootstrap-select.min.js" crossorigin="anonymous" defer></script>
+      <!-- Externals -->
+      <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script>
 
-  <!-- PWA Věci -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="application-name" content="<%= VUE_APP_SHORT_NAME %>">
-  <link rel="apple-touch-startup-image" href="images/icon-270.png">
-  <link rel="apple-touch-icon-precomposed" href="images/icon-72.png">
-  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="images/icon-180.png">
-  <link rel="apple-touch-icon" sizes="40x40" href="images/apple/icon-40.png">
-  <link rel="apple-touch-icon" sizes="58x58" href="images/apple/icon-58.png">
-  <link rel="apple-touch-icon" sizes="60x60" href="images/apple/icon-60.png">
-  <link rel="apple-touch-icon" sizes="80x80" href="images/apple/icon-80.png">
-  <link rel="apple-touch-icon" sizes="87x87" href="images/apple/icon-87.png">
-  <link rel="apple-touch-icon" sizes="114x114" href="images/apple/icon-114.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="images/apple/icon-120.png">
-  <link rel="apple-touch-icon" sizes="144x144" href="images/apple/icon-144.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="images/apple/icon-152.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="images/apple/icon-167.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="images/apple/icon-180.png">
-  <link rel="apple-touch-startup-image" href="images/apple/splash/750x1334.png"
-        media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-  <!-- iPhone 5 (640px x 1136px) -->
-  <link rel="apple-touch-startup-image"
-        media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
-        href="images/apple/splash/640x1136.png">
-  <link rel="apple-touch-startup-image" href="images/apple/splash/1125x2436.png"
-        media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
-  <link rel="apple-touch-startup-image" href="images/apple/splash/1242x2688.png"
-        media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
-  <!-- iPhone 8 Plus, 7 Plus, 6s Plus, 6 Plus (1242px x 2208px) -->
-  <link rel="apple-touch-startup-image"
-        media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)"
-        href="images/apple/splash/1242x2208.png">
-  <link rel="apple-touch-startup-image" href="images/apple/splash/1536x2048.png"
-        media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait)">
-  <!-- iPad Pro 11” (1668px x 2388px) -->
-  <link rel="apple-touch-startup-image"
-        media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)"
-        href="images/apple/splash/1668x2388.png">
-  <!-- iPad Pro 10.5" (1668px x 2224px) -->
-  <link rel="apple-touch-startup-image"
-        media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)"
-        href="images/apple/splash/1668x2224.png">
-  <link rel="apple-touch-startup-image" href="images/apple/splash/2048x2732.png"
-        media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait)">
-  <meta name="msapplication-navbutton-color" content="#2196F3">
-  <meta name="msapplication-tap-highlight" content="no" />
+      <link rel="preload" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" as="style"
+            crossorigin="anonymous">
+      <link rel="preload" as="style"
+            href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.12/css/bootstrap-select.min.css"
+            crossorigin="anonymous">
+      <script data-cfasync="false" src="js/material.min.js" defer></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" crossorigin="anonymous"
+              defer></script>
+      <script data-cfasync="false" src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+              crossorigin="anonymous" defer></script>
+
+      <script src="https://browser.sentry-cdn.com/5.11.0/bundle.min.js"
+              integrity="sha384-jbFinqIbKkHNg+QL+yxB4VrBC0EAPTuaLGeRT0T+NfEV89YC6u1bKxHLwoo+/xxY"
+              crossorigin="anonymous"></script>
+      <!-- If you include the integration it will be available under Sentry.Integrations.Vue -->
+      <script src="https://browser.sentry-cdn.com/5.11.0/vue.min.js" crossorigin="anonymous"></script>
+
+      <!-- PWA Věci -->
+      <meta name="mobile-web-app-capable" content="yes">
+      <meta name="application-name" content="<%= VUE_APP_SHORT_NAME %>">
+      <link rel="apple-touch-startup-image" href="images/icon-270.png">
+      <link rel="apple-touch-icon-precomposed" href="images/icon-72.png">
+      <link rel="apple-touch-icon-precomposed" sizes="180x180" href="images/icon-180.png">
+      <link rel="apple-touch-icon" sizes="40x40" href="images/apple/icon-40.png">
+      <link rel="apple-touch-icon" sizes="58x58" href="images/apple/icon-58.png">
+      <link rel="apple-touch-icon" sizes="60x60" href="images/apple/icon-60.png">
+      <link rel="apple-touch-icon" sizes="80x80" href="images/apple/icon-80.png">
+      <link rel="apple-touch-icon" sizes="87x87" href="images/apple/icon-87.png">
+      <link rel="apple-touch-icon" sizes="114x114" href="images/apple/icon-114.png">
+      <link rel="apple-touch-icon" sizes="120x120" href="images/apple/icon-120.png">
+      <link rel="apple-touch-icon" sizes="144x144" href="images/apple/icon-144.png">
+      <link rel="apple-touch-icon" sizes="152x152" href="images/apple/icon-152.png">
+      <link rel="apple-touch-icon" sizes="167x167" href="images/apple/icon-167.png">
+      <link rel="apple-touch-icon" sizes="180x180" href="images/apple/icon-180.png">
+      <link rel="apple-touch-startup-image" href="images/apple/splash/750x1334.png"
+            media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+      <!-- iPhone 5 (640px x 1136px) -->
+      <link rel="apple-touch-startup-image"
+            media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
+            href="images/apple/splash/640x1136.png">
+      <link rel="apple-touch-startup-image" href="images/apple/splash/1125x2436.png"
+            media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+      <link rel="apple-touch-startup-image" href="images/apple/splash/1242x2688.png"
+            media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+      <!-- iPhone 8 Plus, 7 Plus, 6s Plus, 6 Plus (1242px x 2208px) -->
+      <link rel="apple-touch-startup-image"
+            media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)"
+            href="images/apple/splash/1242x2208.png">
+      <link rel="apple-touch-startup-image" href="images/apple/splash/1536x2048.png"
+            media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait)">
+      <!-- iPad Pro 11” (1668px x 2388px) -->
+      <link rel="apple-touch-startup-image"
+            media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)"
+            href="images/apple/splash/1668x2388.png">
+      <!-- iPad Pro 10.5" (1668px x 2224px) -->
+      <link rel="apple-touch-startup-image"
+            media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)"
+            href="images/apple/splash/1668x2224.png">
+      <link rel="apple-touch-startup-image" href="images/apple/splash/2048x2732.png"
+            media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait)">
+      <meta name="msapplication-navbutton-color" content="#2196F3">
+      <meta name="msapplication-tap-highlight" content="no" />
+
+      <!-- Low priority styles -->
+      <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.12/css/bootstrap-select.min.css"
+            crossorigin="anonymous">
 </head>
 
 <body id="app">
-  <noscript>
-    <strong>Bez zapnutého JavaScriptu nebude možné zpěvníkátor spustit. Ale můžete použít statickou verzi na <a
-         href="http://dorostmladez.cz/chvaly">dorostmladez.cz/chvaly</a>.</strong>
-  </noscript>
-  <!-- built files will be auto injected -->
+      <noscript>
+            <strong>Bez zapnutého JavaScriptu nebude možné zpěvníkátor spustit. Ale můžete použít statickou verzi na <a
+                     href="http://dorostmladez.cz/chvaly">dorostmladez.cz/chvaly</a>.</strong>
+      </noscript>
+      <!-- built files will be auto injected -->
+      <script data-cfasync="false" type="text/javascript" charset="utf8"
+              src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
+      <script data-cfasync="false" type="text/javascript" charset="utf8"
+              src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"
+              defer></script>
 </body>
 
 </html>

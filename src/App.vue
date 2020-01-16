@@ -1,7 +1,7 @@
 <template>
 <body id="app" class="body-white">
   <header class="navbar navbar-expand-xl navbar-light fixed-top">
-    <a class="navbar-brand" id="title" href="#">Dorostomládežový Zpěvníkátor</a>
+    <a class="navbar-brand" id="title" href="#">{{headerTitle}}</a>
     <button
       class="navbar-toggler hidden-md-up"
       type="button"
@@ -157,6 +157,12 @@ export default {
     SettingsDialog: () =>
       import(/* webpackChunkName: "dialogs" */ "./views/dialogs/Settings")
   },
+  computed:{
+    headerTitle()
+    {
+      return this.$store.state.title;
+    }
+  },
   mounted: function() {
     this.localHistory = [this.pathname];
     var _class = this;
@@ -183,8 +189,7 @@ export default {
       }
       next();
     });
-    window.globalManager.resourcesReady(this, function() {
-      var navCollapse = $(".navbar-collapse");
+    var navCollapse = $(".navbar-collapse");
       if (!Settings.CookiesAccepted) this.notAcceptedTerms = true;
       var nav = $(".navbar");
       navCollapse.on("show.bs.collapse", function() {
@@ -194,7 +199,6 @@ export default {
       navCollapse.on("hide.bs.collapse", function() {
         navCollapse.removeClass("expanded");
       });
-    });
   }
 };
 </script>

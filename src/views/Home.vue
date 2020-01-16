@@ -126,7 +126,7 @@
 <script>
 // @ is an alias to /src
 import globalManager from "@/js/global";
-import NetworkUtils from "@/js/NetworkUtils";
+import {NetworkUtils} from "@/js/Helpers";
 export default {
   name: "home",
   created() {
@@ -137,8 +137,8 @@ export default {
     globalManager.resourcesReady(this, () => {
       NetworkUtils.getNoCache(
         process.env.VUE_APP_REMOTE_URL + "/api/likeme.php"
-      ).done(function(response) {
-        $("#starNum").text(response);
+      ).then(async function(response) {
+        $("#starNum").text(await response.text());
       });
       var duration = 1700;
       var current = 1;
@@ -177,6 +177,10 @@ export default {
         message("Zas to s tím lajkováním moc nepřehánějte 😁", null, 3000);
       }
     }
-  }
+  },
+  activated()
+	{
+		this.$store.commit('changeTitle','O projektu');
+	}
 };
 </script>
