@@ -2,11 +2,11 @@
   <main class="container">
     <div class="p">
       <button class="btn btn-secondary pwa-d-none mb-2" onclick="checkState(false,true)">Stáhnout offline</button>
-      <button class="btn btn-light mb-2" onclick="downloadSongIndex(displaySongNumberInfo)">Aktualizovat index písní</button>&ensp;
+      <button class="btn btn-light mb-2" @click="updateIndex">Aktualizovat index písní</button>&ensp;
       <a data-toggle="collapse" href="#moreOptions">Více...</a>
       <p class="collapse" id="moreOptions">
-        <button class="btn btn-danger mb-2" id="purgeSongs">Smazat databázi</button>
-        <button class="btn btn-danger mb-2" id="resetSettings">Tovární předvolby</button>
+        <button class="btn btn-danger mb-2 mr-2" @click="purgeSongs">Smazat databázi</button>
+        <button class="btn btn-danger mb-2" @click="resetSettings">Tovární předvolby</button>
       </p>
     </div>
     <div class="card bg-white fw p mb-4">
@@ -14,26 +14,26 @@
         <h5 class="card-title bg-white">Aktuální stav</h5>
       </div>
       <div class="list-group list-group-flush">
-        <span class="list-group-item disabled" id="registrated">
+        <span :class="$store.state.workerState>=1?'list-group-item' :'list-group-item disabled'" id="registrated">
           <i class="material-icons">info</i>&ensp;Registrace v prohlížeči
           <i class="material-icons rotating d-none loading-icon">autorenew</i>
         </span>
-        <span class="list-group-item disabled" id="basic">
+        <span :class="'list-group-item' + ($store.state.workerState>=4?'':' disabled')" id="basic">
           <i class="material-icons">cloud_download</i>&ensp;Stáhnutí základních souborů
           <i class="material-icons rotating d-none loading-icon">autorenew</i>
         </span>
-        <span class="list-group-item disabled" id="extended">
-          <i class="material-icons">offline_bolt</i>&ensp;Stáhnutí rozšiřujících souborů
+        <span :class="'list-group-item' + ($store.state.workerState>=6?'':' disabled')" id="extended">
+          <i class="material-icons">offline_bolt</i>&ensp;Stáhnutí externích souborů
           <i class="material-icons rotating d-none loading-icon">autorenew</i>
         </span>
-        <span class="list-group-item disabled" id="installation">
+        <span :class="'list-group-item' + (insidePwa?'':' disabled')" id="installation">
           <i class="material-icons">exit_to_app</i>&ensp;Instalace
           <span class="float-right">
             <button id="offlineEnable" class="btn btn-outline-secondary d-none">Počkejte prosím..</button>&ensp;
             <i class="material-icons rotating d-none loading-icon">autorenew</i>
           </span>
         </span>
-        <div class="list-group-item disabled" id="all_song_download">
+        <div :class="'list-group-item' + (allSongsDown?'':' disabled')" id="all_song_download">
           <i class="material-icons">touch_app</i> Stáhnutí písní
           <span class="float-right">
             <button class="btn btn-outline-secondary" id="songDownloadBtn" onclick="downloadAllSongs()">Stáhnout všechny písně</button>&ensp;
@@ -160,18 +160,22 @@
 </template>
 
 <script>
-import { MyServiceWorker, Environment } from "../js/Helpers";
+import { MyServiceWorker, Environment, UIHelpers, SongProcessing } from "../js/Helpers";
+import { SongDB } from '../js/databases/SongDB';
+const WorkerStates = Object.freeze({0:'dead',1:'ready',3:'downloadingLocal',4:'downloadedLocal',5:'downloadingExternal',6:'downloadedExternal',7:'essential_ok'});
 export default {
 	data() {
 		return {
 			detectionResult: "Nevím jestli to bude fungovat, ale můžete to zkusit :D",
 			browserVersion: "Neznámá",
 			browserDetected: false,
-			verdictClass: "text-primary"
+			verdictClass: "text-primary",
+			allSongsDown:true
 		};
 	},
 	created() {
 		this.version = process.env.VUE_APP_VERSION;
+		this.insidePwa = Environment.InsidePwa;
 	},
 	mounted() {
 		"use strict";
@@ -180,7 +184,6 @@ export default {
 			btn.tooltip("disable");
 		});
 		//checkState(true); //Without download
-		$("#appVersion").html();
 		var fileInput = document.getElementById("inputFile");
 		var importButton = document.getElementById("importButton");
 		var btnAdd = $("#offlineEnable")[0];
@@ -239,7 +242,7 @@ export default {
 	methods: {
 		exportSong() {
 			var songsArray = [];
-			caches.open(songCache).then(function(cache) {
+			caches.open(process.env.VUE_APP_SONG_DB_NAME).then(function(cache) {
 				return cache.keys().then(function(keys) {
 					cache.matchAll("/api/getsong.php", { ignoreSearch: true }).then(function(responses) {
 						return SongDB.read(function(songStore) {
@@ -273,7 +276,7 @@ export default {
 								Promise.all([dbPromise, cachePromise]).then(function() {
 									songsArray.push(songInfo);
 									if (i == responses.length - 1) {
-										dialog(
+										UIHelpers.Dialog(
 											'<div class="d-flex"><input type="text" id="downFileName" placeholder="Jméno souboru" value="ZpěvníkátorExport" class="form-control mr-2"><div class="m-auto mr-1">.songs</div></div>',
 											function(result) {
 												if (result == "ok") {
@@ -288,7 +291,7 @@ export default {
 													aProxy.download = fileName + ".songs";
 													document.body.appendChild(aProxy);
 													aProxy.click();
-													dialog(
+													UIHelpers.Dialog(
 														'Soubor "' +
 															fileName +
 															".songs\" by nyní měl být ve vaší složce stažených souborů.<br>Na stránce <a href='/offline'><span class='pwa-d-none'>Stáhnout</span></a> pak můžete vy nebo někdo, komu písně pošlete, písně ze souborů importovat.",
@@ -296,12 +299,12 @@ export default {
 															window.URL.revokeObjectURL(url);
 															aProxy.remove();
 														},
-														DialogType.Ok,
+														UIHelpers.DialogType.Ok,
 														"Stáhnutí"
 													);
 												}
 											},
-											DialogType.OkCancel,
+											UIHelpers.DialogType.OkCancel,
 											"Zadejte jméno exportovaného souboru"
 										);
 									}
@@ -313,7 +316,7 @@ export default {
 			});
 		},
 		purgeSongs() {
-			dialog(
+			UIHelpers.Dialog(
 				"Bude smazán index písní a všechny offline písně včetně rozepsaných a nepublikovaných. Poté je můžete stáhnou znovu nebo importovat ze souborů.",
 				function(res) {
 					if (res == "yes") {
@@ -324,12 +327,12 @@ export default {
 						SongDB.delete(fReload, fReload);
 					}
 				},
-				DialogType.YesNo,
+				UIHelpers.DialogType.YesNo,
 				"Chcete pokračovat?"
 			);
 		},
 		resetSettings() {
-			dialog(
+			UIHelpers.Dialog(
 				"Nastavení aplikace včetně vybrané transpozice písní bude obnoveno na počáteční hodnoty. Offline databáze zůstane zachována.",
 				function(res) {
 					if (res == "yes") {
@@ -337,14 +340,14 @@ export default {
 						location.reload(true);
 					}
 				},
-				DialogType.YesNo,
+				UIHelpers.DialogType.YesNo,
 				"Chcete pokračovat?"
 			);
 		},
 		fileImport(event) {
 			var curFiles = this.files;
 			if (curFiles.length === 0) {
-				message("Žádné soubory nevybrány", "danger", 3000);
+				UIHelpers.Message("Žádné soubory nevybrány", "danger", 3000);
 			} else {
 				var newSongs = 0;
 				var changedSongs = 0;
@@ -392,7 +395,7 @@ export default {
 							});
 						} catch (e) {
 							console.warn(e);
-							message("Chyba při čtení souboru " + file.name, "warning", 3000);
+							UIHelpers.Message("Chyba při čtení souboru " + file.name, "warning", 3000);
 							if (i == curFiles.length - 1) {
 								importButton.insertAdjacentHTML("afterend", '<i class="ml-4 text-warning material-icons">warning</i><span class="text-warning"> (byly nalezeny chyby)</span>');
 								SongDB.informAboutChanges(changedSongs, newSongs);
@@ -403,10 +406,14 @@ export default {
 					r.readAsArrayBuffer(file);
 				}
 			}
+		},
+		updateIndex()
+		{
+			SongDB.downloadIndex();
 		}
 	},
 	activated() {
-		this.$store.commit("changeTitle", "Písně");
+		this.$store.commit("changeTitle", "Správa aplikace");
 	}
 };
 </script>

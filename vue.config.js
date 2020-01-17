@@ -3,6 +3,7 @@ process.env.VUE_APP_VERSION = version;
 
 module.exports = {
   publicPath: "./",
+  /*devServer: { https: true },*/
   css: {
     sourceMap: true
   },
@@ -89,6 +90,15 @@ module.exports = {
           sizes: "512x512"
         }
       ],
+    }
+  },
+  configureWebpack:{
+    resolve: {
+      alias: {
+        pson: 'pson/dist/PSON.js',
+        ByteBuffer: 'bytebuffer',
+        Long: 'long'
+      },
     }
   }
 }

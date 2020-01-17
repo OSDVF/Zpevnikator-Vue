@@ -15,17 +15,18 @@
         </div>
         <div class="modal-body">
           <form id="acceptTerms" @submit="onSubmit">
-            <div class="p">
+            <p>
               Pokračováním dál souhlasíte s používáním cookies, a údajů o vašem zařízení těmito stránkami.
               <br />Je to totiž nutné aby to celé vůbec fungovalo :)
               <br />
               <br />Veškerá data a nastavení, která na webu nebo v aplikaci provedete jsou uloženy jen offline na vašem zařízení a nejsou žádným způsobem sdíleny se serverem (kromě vámi publikovaných písní).
               <br />
-              <div class="custom-control custom-checkbox">
+            </p>
+            <div class="custom-control custom-checkbox">
                 <input type="checkbox" class="custom-control-input" id="suhlas" required />
                 <label class="custom-control-label" for="suhlas">Souhlasím</label>
               </div>
-            </div>
+              <p></p>
             <p>
               <a
                 href="#"
@@ -47,6 +48,7 @@ import Settings from "../../js/Settings";
 export default {
   mounted() {
     $("#cookieRequest").modal("show");
+    $('#ttAnchor1').tooltip()
   },
   methods: {
     onSubmit(event) {

@@ -342,34 +342,18 @@ const UIHelpers = {
 					});
 			});
 		});
-		if (type == DialogType.NoButtonsWeak)
+		if (type == UIHelpers.DialogType.NoButtonsWeak)
 			clone.attr("data-backdrop", true);
 		clone.modal("show");
 		return clone;
 	},
-	/**
-	 *  @description Shows message in message area
-	 * @param {string} alert Text to display
-	 * @param {string} type Type (success/info/warning/danger)
-	 * @param {number} timeout Time to display the message
-	 * @param {boolean} multiline Make the snackbar multiline?
-	 */
-	Message(alert, type, timeout, multiline)
-	{
-		if (jQuery.isReady)
-			$(document).ready(function ()
-			{
-				showSnackbar('<div class="snackbar-body">' + alert + '</div>', type, timeout, multiline);
-			});
-		else
-			showSnackbar('<div class="snackbar-body">' + alert + '</div>', type, timeout, multiline);
-	},
+	pendingMessages: [],
 	placeSnackbar($snackbar, text, type, timeout, multiline)
 	{
 		"use strict";
-		$snackbar.addClass(function ()
+		$snackbar.addClass(()=>
 		{
-			setTimeout(function ()
+			setTimeout(()=>
 			{
 				$snackbar.removeClass('showing')
 			}, parseFloat($snackbar.css("transition-duration")) * 1000)
@@ -390,12 +374,12 @@ const UIHelpers = {
 					$snackbar.removeClass("snackbar-multi-line");
 				//children.html(text);
 			}
-			setTimeout(function ()
+			setTimeout(()=>
 			{
 				$snackbar.removeClass('show')
-				setTimeout(function ()
+				setTimeout(()=>
 				{
-					if (pendingMessages.length > 0) pendingMessages.pop()();
+					if (UIHelpers.pendingMessages.length > 0) UIHelpers.pendingMessages.pop()();
 				}, 300)
 			}, timeout)
 			return 'show showing'
@@ -409,23 +393,23 @@ const UIHelpers = {
 		{
 			if ($snackbar.hasClass('showing'))
 			{
-				$snackbar.one('webkitTransitionEnd transitionEnd', function ()
+				$snackbar.one('webkitTransitionEnd transitionEnd',()=>
 				{
-					$snackbar.one('webkitTransitionEnd transitionEnd', function ()
+					$snackbar.one('webkitTransitionEnd transitionEnd',()=>
 					{
-						placeSnackbar($snackbar, text, type, timeout, multiline)
+						UIHelpers.placeSnackbar($snackbar, text, type, timeout, multiline)
 					});
 				});
 			} else
 			{
-				$snackbar.one('webkitTransitionEnd transitionEnd', function ()
+				$snackbar.one('webkitTransitionEnd transitionEnd', ()=>
 				{
-					placeSnackbar($snackbar, text, type, timeout, multiline)
+					UIHelpers.placeSnackbar($snackbar, text, type, timeout, multiline)
 				});
 			}
 		} else
 		{
-			placeSnackbar($snackbar, text, type, timeout, multiline)
+			UIHelpers.placeSnackbar($snackbar, text, type, timeout, multiline)
 		}
 	},
 	queueSnackbar(text, type, timeout, multiline)
@@ -439,13 +423,44 @@ const UIHelpers = {
 		{
 			$('body').append('<div class="snackbar" id="mainSnackbar"></div>');
 		}
-		pendingMessages.push(function ()
+		UIHelpers.pendingMessages.push(()=>
 		{
-			fillSnackbar(text, type, timeout, multiline)
+			UIHelpers.fillSnackbar(text, type, timeout, multiline)
 		});
 		if (!$('#mainSnackbar').hasClass('show'))
-			pendingMessages.pop()();
-	}
+		UIHelpers.pendingMessages.pop()();
+	},
+	/**
+	 *  @description Shows message in message area
+	 * @param {string} alert Text to display
+	 * @param {string} type Type (success/info/warning/danger)
+	 * @param {number} timeout Time to display the message
+	 * @param {boolean} multiline Make the snackbar multiline?
+	 */
+	Message(alert, type, timeout, multiline)
+	{
+		UIHelpers.queueSnackbar('<div class="snackbar-body">' + alert + '</div>', type, timeout, multiline);
+	},
+	noSleep: null,
+    initializeNoSleep: function ()
+    {
+        if (UIHelpers.noSleep == undefined)
+        {
+            try
+            {
+				UIHelpers.noSleep = new NoSleep();
+				return true;
+            }
+            catch (e)
+            {
+                if (e instanceof ReferenceError)
+                {
+                    UIHelpers.Message('Nepodařilo se načíst součást pro zabránění vypínaní displeje. Možná není úplně stažena.', "danger", 3000, true)
+				}
+				return false;
+            }
+        }
+    }
 }
 
 const MyServiceWorker = {
@@ -490,7 +505,14 @@ const Environment = {
 			return navigator.userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i);
 		}
 
-	}
+	},
+	InsidePwa: ((window.matchMedia('(display-mode: standalone)').matches && (document.referrer.includes('location.host') || (document.referrer == '')))
+		|| document.referrer.includes('android-app://')//TWA
+		|| window.navigator.standalone),//Safari
+	/*html.addClass("inside-pwa");
+	$("a.nav-link[href$='offline']").html("<i class='material-icons'>offline_pin</i>&ensp;Spravovat stažené");*/
+	DarkMode: (window.matchMedia('(prefers-color-scheme: dark)').matches || window.matchMedia('(prefers-dark-interface)'))
+
 }
 export
 {

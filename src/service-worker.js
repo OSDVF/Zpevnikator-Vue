@@ -10,6 +10,8 @@ var db;
 var pendingDBRequests = [];
 var pendingOnLoad = [];
 var reject = Promise.reject();
+const WorkerStates = {'dead':0,'ready':1,'registered':2,'downloadingLocal':3,'downloadedLocal':4,'downloadingExternal':5,'downloadedExternal':6,'essential_ok':7};
+Object.freeze(WorkerStates);
 
 var raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
 var chromeVersion = raw ? parseInt(raw[2], 10) : 0;
@@ -124,7 +126,7 @@ var localCompleted = () => lc = true;
 function precacheEssential(noCache)
 {
     var message = {};
-    message.actualState = "downloading_essential";
+    message.actualState = WorkerStates.downloadingLocal;
     message.messageType = "caching_state_changed";
     postMessageToClient(message);
     precaching = true;
@@ -138,13 +140,13 @@ function precacheEssential(noCache)
             var message = {};
             if (numberOfFetched > 0)
             {
-                message.actualState = "downloaded_essential";
+                message.actualState = WorkerStates.downloadedLocal;
                 message.messageType = "caching_state_changed";
                 postMessageToClient(message);
             }
             else if (numberOfFetched == -1)
             {
-                message.actualState = "essential_ok";
+                message.actualState = WorkerStates.essential_ok;
                 message.messageType = "caching_state_changed";
                 postMessageToClient(message);
             }
@@ -176,7 +178,7 @@ function precache(noCache)
         ];
 
         var message = {};
-        message.actualState = "downloading_extended";
+        message.actualState = WorkerStates.downloadingExternal;
         message.messageType = "caching_state_changed";
         postMessageToClient(message);
 
@@ -200,7 +202,7 @@ function precache(noCache)
         return Promise.all([cdnUrlsPromise, rocketLoaderPromise]).then(() =>
         {
             var message = {};
-            message.actualState = "downloaded_extended";
+            message.actualState = WorkerStates.downloadedExternal;
             message.messageType = "caching_state_changed";
             precachedExtended = true;
             extendedPrecaching = false;
@@ -510,7 +512,7 @@ self.addEventListener('message', function (event)
         if (!precaching && !precachedEssential)
             precacheEssential();//Pro jistotu
         else if (precachedEssential)
-            postMessageToClient({ actualState: "downloaded_essential", messageType: "caching_state_changed" });
+            postMessageToClient({ actualState: WorkerStates.downloadedLocal, messageType: "caching_state_changed" });
 
     }
     else if (event.data.tag === 'extended-download')
@@ -518,7 +520,7 @@ self.addEventListener('message', function (event)
         if (!extendedPrecaching && !precachedExtended)
             precache();
         else if (precachedExtended)
-            postMessageToClient({ actualState: "downloaded_extended", messageType: "caching_state_changed" });
+            postMessageToClient({ actualState: WorkerStates.downloadedExternal, messageType: "caching_state_changed" });
     }
     else if (event.data.tag === 'clean')
     {
