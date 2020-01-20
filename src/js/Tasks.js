@@ -1,26 +1,55 @@
+import globalManager from '../js/global'
+class Task
+{
+    constructor(name, description, icon, state)
+    {
+        this.id = null;
+        this.name = name;
+        this.description = description;
+        this.icon = icon || 'developer_board';
+        this.state = state || 'idle';
+    }
+    run()
+    {
+        this.state = 'running';
+        globalManager.Vue.$store.commit('addTask', this);
+        Tasks.updateTaskCount();
+    }
+    completed()
+    {
+        this.state = 'completed';
+        globalManager.Vue.$store.commit('removeTask', this.id);
+        Tasks.updateTaskCount();
+    }
+}
 const Tasks = {
+    /**
+     * @type HTMLElement
+     */
     indicatorElement: null,
-    activeTasks: [],
-    assignedSureDetection:false,
-    makeUserSure(event) {
+    assignedSureDetection: false,
+    makeUserSure(event)
+    {
         const text = "Opuštěním stránky zrušíte všechny probíhající úkoly. Opravdu to chcete udělat?";
         event.preventDefault();
         event.returnValue = text;
         return text;
     },
-    updateTaskCount() {
-        if(!this.indicatorElement)
-            this.indicatorElement = $('.navbar [data-target="#tasks"] .material-icons')
-        var count = Tasks.UncompletedCount;
+    updateTaskCount()
+    {
+        var count = this.UncompletedCount;
         if (count > 9)
-            this.indicatorElement.html("filter_9_plus");
-        else if (count == 0) {
-            this.indicatorElement.html("assistant");
+            this.indicatorElement.innerHTML = "filter_9_plus";
+        else if (count == 0)
+        {
+            this.indicatorElement.innerHTML = ("assistant");
             window.removeEventListener('beforeunload', this.makeUserSure);
             this.assignedSureDetection = false;
-        } else {
-            this.indicatorElement.html("filter_" + count);
-            if (!this.assignedSureDetection) {
+        } else
+        {
+            this.indicatorElement.innerHTML = ("filter_" + count);
+            if (!this.assignedSureDetection)
+            {
                 window.addEventListener('beforeunload', this.makeUserSure);
                 this.assignedSureDetection = true;
             }
@@ -28,11 +57,15 @@ const Tasks = {
     },
     AddActive: function (name, description, icon) //Returns "Task" object
     {
-        var nat = document.getElementById("noActiveTasks");
+        const newTask = new Task(name, description, icon);
+        newTask.run();
+        /*var nat = document.getElementById("noActiveTasks");
         if (nat) nat.outerHTML = "";
-        for (var newId = 0; newId < this.activeTasks.length; newId++) {
+        for (var newId = 0; newId < this.activeTasks.length; newId++)
+        {
             var match = false;
-            for (var x = 0; x < this.activeTasks.length; x++) {
+            for (var x = 0; x < this.activeTasks.length; x++)
+            {
                 if (newId == this.activeTasks[x].id) match = true;
             }
             if (!match) break;
@@ -56,49 +89,60 @@ const Tasks = {
         return {
             id: newId,
             element: newTaskElement,
-            completed: function () {
+            completed: function ()
+            {
                 Tasks.MarkCompleted(newId);
             },
-            failed: function () {
+            failed: function ()
+            {
                 Tasks.MarkFailed(newId)
             }
-        }
+        }*/
     },
     Remove: function (id) //One should also delete all references to a task... (delete t;)
     {
-        for (var i = this.activeTasks.length - 1; i >= 0; i--) {
-            if (this.activeTasks[i].id === id) {
+        for (var i = this.activeTasks.length - 1; i >= 0; i--)
+        {
+            if (this.activeTasks[i].id === id)
+            {
                 this.activeTasks.splice(i, 1);
             }
         }
         var tsk = $("#taskList>#task-" + id).addClass("unopaque");
         var _this = this;
-        setTimeout(function () {
+        setTimeout(function ()
+        {
             tsk.remove();
-            if (_this.activeTasks.length == 0) {
+            if (_this.activeTasks.length == 0)
+            {
                 $("#clearTasks").addClass("unopaque");
             }
         }, 500);
     },
-    Find: function (id) {
+    Find: function (id)
+    {
         for (var i = this.activeTasks.length - 1; i >= 0; i--)
             if (this.activeTasks[i].id === id) return this.activeTasks[i];
     },
-    MarkCompleted: function (id) {
+    MarkCompleted: function (id)
+    {
         var taskItem = $("#taskList>#task-" + id);
         taskItem.find(".loading-icon").removeClass("d-none");
-        taskItem.find(".hover-red").click(function () {
+        taskItem.find(".hover-red").click(function ()
+        {
             Tasks.Remove(id);
         });
         Tasks.Find(id).completed = true;
         $("#clearTasks").removeClass("unopaque");
         this.updateTaskCount();
     },
-    MarkFailed: function (id) {
+    MarkFailed: function (id)
+    {
         var taskItem = $("#taskList>#task-" + id);
         taskItem.find(".loading-icon").removeClass("d-none");
         taskItem.find(".text-success").html("report_problem").removeClass("text-success").addClass("text-warning")
-        taskItem.find(".hover-red").click(function () {
+        taskItem.find(".hover-red").click(function ()
+        {
             Tasks.Remove(id);
         });
         Tasks.Find(id).completed = true;
@@ -106,40 +150,30 @@ const Tasks = {
         $("#clearTasks").removeClass("unopaque");
         this.updateTaskCount();
     },
-    ClearCompleted: function () {
+    ClearCompleted: function ()
+    {
         "use strict";
-        for (var i = this.activeTasks.length - 1; i >= 0; i--) {
-            if (this.activeTasks[i].completed) {
+        for (var i = this.activeTasks.length - 1; i >= 0; i--)
+        {
+            if (this.activeTasks[i].completed)
+            {
                 let tsk = $("#taskList>#task-" + this.activeTasks[i].id).addClass("unopaque");
-                setTimeout(function () {
+                setTimeout(function ()
+                {
                     tsk.remove();
                 }, 500);
                 this.activeTasks.splice(i, 1);
             }
         }
         $("#clearTasks").addClass("unopaque");
+    },
+    get CompletedCount()
+    {
+        return globalManager.Vue.$store.getters.completedTasksCount;
+    },
+    get UncompletedCount()
+    {
+        return globalManager.Vue.$store.getters.uncompletedTasksCount;
     }
 };
-Object.defineProperties(Tasks, {
-    CompletedCount: {
-        get: function () {
-            var count = 0;
-            for (var i = this.activeTasks.length - 1; i >= 0; i--)
-                if (this.activeTasks[i].completed) count++;
-            return count;
-        },
-        enumerable: false,
-        configurable: false
-    },
-    UncompletedCount: {
-        get: function () {
-            var count = 0;
-            for (var i = this.activeTasks.length - 1; i >= 0; i--)
-                if (!this.activeTasks[i].completed) count++;
-            return count;
-        },
-        enumerable: false,
-        configurable: false
-    }
-})
 export default Tasks;

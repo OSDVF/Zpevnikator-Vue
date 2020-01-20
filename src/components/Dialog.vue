@@ -3,18 +3,18 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" v-html="title"></h5>
+          <h5 class="modal-title" v-html="headerData"></h5>
         </div>
         <div class="modal-body">
-          <P v-html="text">
+          <P v-html="textData">
           </P>
         </div>
         <div class="modal-footer">
           <span v-html="footer"></span>
-          <button type="button" class="btn btn-secondary" v-if='type==DialogType.OkCancel' data-dismiss="modal" aria-label="Zrušit" @click="click('cancel')" v-html="cancelBtnHtml"></button>
-          <button type="button" class="btn btn-primary" v-if="type==DialogType.Ok||type==DialogType.OkCancel" data-dismiss="modal" aria-label="OK" @click="click('ok');positiveListener()" v-html='okBtnHtml'></button>
-          <button type="button" class="btn btn-secondary" v-if="type==DialogType.YesNo" data-dismiss="modal" aria-label="Ne" @click="click('no')">Ne</button>
-          <button type="button" class="btn btn-primary" v-if="type==DialogType.YesNo" data-dismiss="modal" aria-label="Ano" @click="click('yes');positiveListener()">Ano</button>
+          <button type="button" class="btn btn-secondary" v-if='typeData==DialogType.OkCancel' data-dismiss="modal" aria-label="Zrušit" @click="click('cancel')" v-html="cancelBtnHtml"></button>
+          <button type="button" class="btn btn-primary" v-if="typeData==DialogType.Ok||typeData==DialogType.OkCancel" data-dismiss="modal" aria-label="OK" @click="click('ok');positiveListener()" v-html='okBtnHtml'></button>
+          <button type="button" class="btn btn-secondary" v-if="typeData==DialogType.YesNo" data-dismiss="modal" aria-label="Ne" @click="click('no')">Ne</button>
+          <button type="button" class="btn btn-primary" v-if="typeData==DialogType.YesNo" data-dismiss="modal" aria-label="Ano" @click="click('yes');positiveListener()">Ano</button>
         </div>
       </div>
     </div>
@@ -26,39 +26,57 @@ import { UIHelpers } from "../js/Helpers";
 export default {
 	data() {
 		return {
-			title: "",
-			footer: "",
-			text: "",
-			type: UIHelpers.DialogType.Ok,
-			okBtnHtml: "OK",
-			cancelBtnHtml: "Zrušit"
+			textData: this.text,
+			headerData: this.header,
+			footerData: this.footer,
+			typeData: this.type,
+			okBtnHtml: this.ok,
+			cancelBtnHtml: this.cancel
 		};
 	},
-	props: ["id"],
+	props: {
+		header: String,
+		footer: String,
+		text: String,
+		type: {
+			type:String,
+			validator: (val) => ['top', 'right', 'bottom', 'left'].includes(val),
+			default:null
+		},
+		ok: {
+			type:String,
+			default:'OK'
+		},
+		cancel: {
+			type:String,
+			default:'Zrušit'
+		}
+	},
 	created() {
 		this.DialogType = UIHelpers.DialogType;
+		this.$parent.DialogType = UIHelpers.DialogType;
 	},
 	methods: {
 		setData(text, callback, type, header, footer, positiveEventListener) {
-			this.text = text;
+			this.textData = text;
 			this.click = callback;
-			this.type = type;
-			this.title = header;
-			this.footer = footer;
+			this.typeData = type;
+			this.headerData = header;
+			this.footerData = footer;
 			this.positiveListener = positiveEventListener;
 		},
 		show() {
 			this.$modal = $(this.$el).modal();
-			if (typeof this.type == "string") {
-				this.okBtnHtml = this.type; //For creating dialogs with custom button texts
-				this.type = UIHelpers.DialogType.Ok;
-			} else if (this.type instanceof Array) {
-				this.okBtnHtml = this.type[0];
-				this.cancelBtnHtml = this.type[1];
-				this.type = UIHelpers.DialogType.OkCancel;
+			if (typeof this.typeData == "string") {
+				this.okBtnHtml = this.typeData; //For creating dialogs with custom button texts
+				this.typeData = UIHelpers.DialogType.Ok;
+			} else if (this.typeData instanceof Array) {
+				this.okBtnHtml = this.typeData[0];
+				this.cancelBtnHtml = this.typeData[1];
+				this.typeData = UIHelpers.DialogType.OkCancel;
 			}
 
-			if (this.type == UIHelpers.DialogType.NoButtonsWeak) this.$modal.attr("data-backdrop", true);
+			if (this.typeData == UIHelpers.DialogType.NoButtonsWeak) this.$modal.attr("data-backdrop", true);
 			this.$modal.modal("show");
 
 			//Attach listeners to internal components
