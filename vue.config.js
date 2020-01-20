@@ -10,7 +10,9 @@ module.exports = {
   pwa: {
     workboxPluginMode: 'InjectManifest',
     workboxOptions: {
-      swSrc: 'src/service-worker.js'
+      swSrc: 'src/service-worker.js',
+      importWorkboxFrom: 'disabled',
+      exclude: [/^images\//,'robots.txt','manifest.json','.htaccess',/\.map$/, ]
     },
     name: process.env.VUE_APP_SHORT_NAME,
     themeColor: process.env.VUE_APP_THEME_COLOR,

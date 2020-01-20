@@ -1,9 +1,21 @@
 //Includes all the global hooks for external scripts which should be executed after DOM load
 
-import { UIHelpers, Tasks } from './Helpers'
+import { UIHelpers, WorkerStates } from './Helpers'
+import Tasks from './Tasks'
 var pendingReady = [];
 const manager = {
-    Vue: null,
+    /**
+     * @type Vue
+     */
+    _vue:null,
+    set Vue(to){
+this._vue = to;
+UIHelpers.store = to.$store;
+    },
+    get Vue()
+    {
+        return this._vue;
+    },
     resourcesReady: function (context, callback)
     {
         if (typeof $ !== 'undefined' && $.isReady)
@@ -11,6 +23,11 @@ const manager = {
         pendingReady.push([callback, context]);
     },
     setupSWMessageBus: setupSWMessageBus,
+    workerReadyWaiting: [],
+    navigate(url)
+    {
+        this._vue.$router.push(url);
+    }
 }
 export default manager;
 window.addEventListener('DOMContentLoaded', () =>
@@ -185,7 +202,34 @@ function setupDatatables()
         return b.localeCompare(a, 'cs')
     }
 }
-
+function afterWorkerRegistration(clb)
+{
+    if (manager.$store.state.workerState > 0)
+        return clb();
+    manager.workerReadyWaiting.push(cls);
+}
+function registerSync(tag)
+{
+    return (function registerIt()
+    {
+        return navigator.serviceWorker.getRegistration().then(function (reg)
+        {
+            var fallback = function ()
+            {
+                console.warn("Attempted to register sync\"" + tag + "\" but service worker wasn't registered. Deferring action until registration.");
+                afterWorkerRegistration(function () { registerIt(tag) });
+                return false;
+            }
+            if (!reg)
+                return fallback();
+            reg = reg.active || reg.installing || reg.waiting;
+            if (!reg)
+                return fallback();
+            reg.postMessage({ tag: tag });
+            return Promise.resolve(reg);
+        })
+    })();
+}
 function setupSWMessageBus()
 {
     navigator.serviceWorker.addEventListener('message', function (event)
@@ -224,32 +268,32 @@ function setupSWMessageBus()
                 manager.Vue.$store.commit('workerState', event.data.actualState);
                 switch (event.data.actualState)
                 {
-                    case "downloading_essential":
+                    case WorkerStates.downloadingLocal:
                         UIHelpers.Message('Stahování základních souborů', null, 2000);
                         manager.dowTsk = Tasks.AddActive("Stahování základních souborů", null, "get_app");
                         break;
-                    case "downloaded_essential":
+                    case WorkerStates.downloadedLocal:
                         UIHelpers.Message('Základní soubory staženy', "success", 2000);
                         registerSync("extended-download");
                         if (manager.dowTsk)
                             manager.dowTsk.completed();
                         break;
-                    case "downloading_extended":
+                    case WorkerStates.downloadingExternal:
                         UIHelpers.Message("Stahování rozšířených souborů...", null, 2000);
                         if (manager.dowTsk)
                             manager.dowTsk.completed();
                         manager.dowTsk = Tasks.AddActive("Stahování rozšířených souborů", null, "get_app");
                         break;
-                    case "downloaded_extended":
+                    case WorkerStates.downloadedExternal:
                         UIHelpers.Message("Rozšířené soubory staženy", "success", 2000);
                         if (manager.deferredPrompt && navigator.onLine)//Pro jistotu, nikdy nevíme jestli 
                         {
-                            dialog("Zpěvníkátor je možné instalovat jako klasickou aplikaci na vaše zařízení. Budete tam ke všem písním mít snadný offline přístup.<br>Nyní je aplikace zpěvníku připravena k instalaci. Chcete ji instalovat?", null, DialogType.YesNo, "Aplikace připravena", null, appDownload);
+                            UIHelpers.Dialog("Zpěvníkátor je možné instalovat jako klasickou aplikaci na vaše zařízení. Budete tam ke všem písním mít snadný offline přístup.<br>Nyní je aplikace zpěvníku připravena k instalaci. Chcete ji instalovat?", null, DialogType.YesNo, "Aplikace připravena", null, appDownload);
                         }
                         if (manager.dowTsk)
                             manager.dowTsk.completed();
                         break;
-                    case "essential_ok":
+                    case WorkerStates.essential_ok:
                         if (manager.dowTsk)
                             manager.dowTsk.completed();
                         console.log("Probably updated service worker and EssentialCache is OK");

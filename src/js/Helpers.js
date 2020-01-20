@@ -264,6 +264,7 @@ const NoSleepHelper = {
 }
 
 const UIHelpers = {
+	store:null,
 	dialogResult: null,
 	DialogType: Object.freeze({
 		"Ok": 1,
@@ -273,79 +274,22 @@ const UIHelpers = {
 		"NoButtons": 5,
 		"NoButtonsWeak": 6
 	}),
-	Dialog(text, callback, type, header, footer, positiveEventListener)
+	/**
+	 * Displays a procedural bootstrap modal
+	 * @param {string} text Inner text to display
+	 * @param {function} callback Occurs when user clicks one of buttons. Gets one value passed: ok|cancel|yes|no
+	 * @param {(DialogType|string|Array)} type One of values of DialogType, custom string for custom 'Ok' button text or an Array in format [ok,cancel] for custom text for these buttons
+	 * @param {string} header Text in header 
+	 * @param {string} footer Text in footer
+	 * @param {function} positiveEventListener Callback for clicking on the more 'positive' button (ok/yes)
+	 * @returns {JQuery<HTMLElement>}
+	 */
+	Dialog(text, callback = new Function(), type = UIHelpers.DialogType.Ok, header, footer, positiveEventListener = new Function())
 	{
-		"use strict";
-		var id = "dialog-" + Math.floor(Math.random() * 101);
-		var clone = $("#dummyDialog").clone().appendTo(".body-black,.body-white").attr("id", id);
-		id = "#" + id;
-		$(id + " #dummyModalLabel").html(header);
-		$(id + " #dummyDialogText").html(text);
-		$(id + " .modal-footer span").html(footer);
-		if (typeof type == "string")
-		{
-			$(id + " .yes-no").addClass("d-none");
-			$(id + " #cancel").addClass("d-none");
-			$(id + " #ok").removeClass("d-none").html(type);
-		} else if (type instanceof Array)
-		{
-			$(id + " .yes-no").addClass("d-none");
-			$(id + " .ok-cancel").removeClass("d-none");
-			$(id + " #ok").html(type[0]);
-			$(id + " #cancel").html(type[1]);
-		} else switch (type)
-		{
-			case 6:
-			case 5:
-				$(id + " .yes-no").addClass("d-none");
-				$(id + " .ok-cancel").addClass("d-none");
-				break;
-			case 2:
-				$(id + " .yes-no").addClass("d-none");
-				$(id + " .ok-cancel").removeClass("d-none");
-				break;
-			case 3:
-				$(id + " .yes-no").removeClass("d-none");
-				$(id + " .ok-cancel").addClass("d-none");
-				break;
-			default:
-				$(id + " .yes-no").addClass("d-none");
-				$(id + " #cancel").addClass("d-none").html("Zrušit");
-				$(id + " #ok").removeClass("d-none").html("OK");
-				break;
-		}
-		let posBut = $(id + " #yes")[0];
-		if (positiveEventListener)
-		{
-			posBut.addEventListener('click', function poCl()
-			{
-				positiveEventListener();
-				posBut.removeEventListener('click', poCl);
-			});
-		}
-		clone.one('hide.bs.modal', function ()
-		{
-			if (typeof callback == "function")
-				callback(dialogResult);
-		});
-		clone.on('hidden.bs.modal', function ()
-		{
-			clone.modal('dispose');
-			clone.remove();
-			var dialogCount = $(".modal.show").length;
-			$("body:not(.modal-open)").find(".modal-backdrop").each(function (index)
-			{
-				if (index >= dialogCount)
-					$(this).removeClass("show").on("webkitTransitionEnd transitionEnd", function ()
-					{
-						this.parentNode.removeChild(this);
-					});
-			});
-		});
-		if (type == UIHelpers.DialogType.NoButtonsWeak)
-			clone.attr("data-backdrop", true);
-		clone.modal("show");
-		return clone;
+		UIHelpers.store.commit('addDialog');
+		const newDialog = UIHelpers.appReferences['dialog'+(UIHelpers.store.state.modalsCount-1)][0];//Because Vuex's reaction to commit is too sloow sometimes
+		newDialog.setData(text, callback, type, header, footer, positiveEventListener);
+		newDialog.show();
 	},
 	pendingMessages: [],
 	placeSnackbar($snackbar, text, type, timeout, multiline)
@@ -463,20 +407,6 @@ const UIHelpers = {
     }
 }
 
-const MyServiceWorker = {
-	Ready()
-	{
-		return new Promise(function (resolve, reject)
-		{
-			if ('serviceWorker' in navigator)
-			{
-				return navigator.serviceWorker.getRegistration().then(function (reg) { if (reg && (reg.active !== null)) resolve(); else reject() });
-			}
-			else reject();
-		})
-	}
-}
-
 const Environment = {
 	isMobile:
 	{
@@ -514,6 +444,7 @@ const Environment = {
 	DarkMode: (window.matchMedia('(prefers-color-scheme: dark)').matches || window.matchMedia('(prefers-dark-interface)'))
 
 }
+const WorkerStates = Object.freeze({ 'dead': 0, 'ready': 1, 'registered': 2, 'downloadingLocal': 3, 'downloadedLocal': 4, 'downloadingExternal': 5, 'downloadedExternal': 6, 'essential_ok': 7 })
 export
 {
 	NetworkUtils,
@@ -522,6 +453,6 @@ export
 	SongProcessing,
 	NoSleepHelper,
 	UIHelpers,
-	MyServiceWorker,
-	Environment
+	Environment,
+	WorkerStates
 }

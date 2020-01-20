@@ -29,7 +29,7 @@
         <span :class="'list-group-item' + (insidePwa?'':' disabled')" id="installation">
           <i class="material-icons">exit_to_app</i>&ensp;Instalace
           <span class="float-right">
-            <button id="offlineEnable" class="btn btn-outline-secondary d-none">Počkejte prosím..</button>&ensp;
+            <button id="offlineEnable" class="btn btn-outline-secondary" v-if="!insidePwa&&$store.state.workerState>0">{{$store.state.workerState>=6?'Instalovat':'Počkejte prosím...'}}</button>&ensp;
             <i class="material-icons rotating d-none loading-icon">autorenew</i>
           </span>
         </span>
@@ -51,7 +51,7 @@
       <br />
       <span class="text-muted typography-caption">- nebo -</span>
       <br />
-      <button class="btn btn-secondary mt-2" id="exportButton">Zálohovat stažené do souboru</button>
+      <button class="btn btn-secondary mt-2" id="exportButton" @click="dlg">Zálohovat stažené do souboru</button>
     </div>
     <h4 class="pwa-d-none">Je možné stáhnout apliakci?</h4>
     <h4 class="d-none pwa-d-initial">Váš systém</h4>
@@ -160,9 +160,8 @@
 </template>
 
 <script>
-import { MyServiceWorker, Environment, UIHelpers, SongProcessing } from "../js/Helpers";
+import { Environment, UIHelpers, SongProcessing, WorkerStates } from "../js/Helpers";
 import { SongDB } from '../js/databases/SongDB';
-const WorkerStates = Object.freeze({0:'dead',1:'ready',3:'downloadingLocal',4:'downloadedLocal',5:'downloadingExternal',6:'downloadedExternal',7:'essential_ok'});
 export default {
 	data() {
 		return {
@@ -179,14 +178,9 @@ export default {
 	},
 	mounted() {
 		"use strict";
-		MyServiceWorker.Ready().then(function() {
-			var btn = $("#offlineEnable").html("Stáhnout aplikaci..");
-			btn.tooltip("disable");
-		});
 		//checkState(true); //Without download
 		var fileInput = document.getElementById("inputFile");
 		var importButton = document.getElementById("importButton");
-		var btnAdd = $("#offlineEnable")[0];
 		const mess = "<span class='text-success'>&nbsp;(Váš případ)</span>";
 		var raw = navigator.userAgent.match(/Chrom(e|ium)\/(\d+)\./);
 		var chromeVersion = raw ? parseInt(raw[2], 10) : 0;
@@ -410,6 +404,10 @@ export default {
 		updateIndex()
 		{
 			SongDB.downloadIndex();
+		},
+		dlg()
+		{
+			UIHelpers.Dialog('Ahoj')
 		}
 	},
 	activated() {

@@ -181,7 +181,7 @@ export default {
 			UIHelpers.Dialog(
 				'Soubor "' +
 					sInfo.info.url +
-					".songs\" by nyní měl být ve vaší složce stažených souborů.<br>Na stránce <a href='/offline'><span class='pwa-d-none'>Stáhnout</span><span class='d-none pwa-d-initial'>Spravovat stažené</span></a> pak můžete vy nebo někdo, komu písně pošlete, písně ze souborů importovat.",
+					".songs\" by nyní měl být ve vaší složce stažených souborů.<br>Na stránce <a href='/offline'><span class='pwa-d-none'>Aplikace</span><span class='d-none pwa-d-initial'>Spravovat stažené</span></a> pak můžete vy nebo někdo, komu písně pošlete, písně ze souborů importovat.",
 				function() {
 					window.URL.revokeObjectURL(url);
 					aProxy.remove();

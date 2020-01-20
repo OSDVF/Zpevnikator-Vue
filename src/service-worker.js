@@ -5,12 +5,10 @@ const extraDownloadedCacheName = `extra-${version}`;
 const essentialCache = `essentials-${version}`;
 const songCache = "songs";
 const base = location.host;
-let insideConsoleGroup = false;
-var db;
 var pendingDBRequests = [];
 var pendingOnLoad = [];
 var reject = Promise.reject();
-const WorkerStates = {'dead':0,'ready':1,'registered':2,'downloadingLocal':3,'downloadedLocal':4,'downloadingExternal':5,'downloadedExternal':6,'essential_ok':7};
+const WorkerStates = { 'dead': 0, 'ready': 1, 'registered': 2, 'downloadingLocal': 3, 'downloadedLocal': 4, 'downloadingExternal': 5, 'downloadedExternal': 6, 'essential_ok': 7 };
 Object.freeze(WorkerStates);
 
 var raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
@@ -130,9 +128,6 @@ function precacheEssential(noCache)
     message.messageType = "caching_state_changed";
     postMessageToClient(message);
     precaching = true;
-    const cdnUrls = [
-
-    ];
     return caches.open(essentialCache).then(function (cache)
     {
         return cacheSeriallyUnlessExists(__precacheManifest/*will be injected*/, cache, noCache).then(function (numberOfFetched)
@@ -174,7 +169,7 @@ function precache(noCache)
             "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js",
             "https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.2.0/js.cookie.min.js",
             "https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/css/bootstrap-select.min.css",
-            "https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/js/bootstrap-select.min.js"
+            "https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"
         ];
 
         var message = {};
@@ -194,7 +189,7 @@ function precache(noCache)
 
         rocketLoaderPromise.then(() =>
         {
-            consoleGroup();
+
             console.log("Rocket loader succesfully \"cached\"")
         });
 
@@ -208,7 +203,7 @@ function precache(noCache)
             extendedPrecaching = false;
             postMessageToClient(message);
             self.skipWaiting();
-            endGroup();
+
             return Promise.resolve();
         }).catch(() =>
         {
@@ -400,7 +395,7 @@ function fetch_it(event)
                                 });
                             }).catch(function (errorArray)
                             {
-                                consoleGroup();
+
                                 errorArray.forEach(function (err) { console.error(err) })
                             });
                         });
@@ -418,7 +413,7 @@ function fetch_it(event)
                     {
                         if (uri.includes(base))
                         {
-                            consoleGroup();
+
                             console.info("%cCache not found " + uri, "color: red");
                         }
                         return reject;
@@ -435,7 +430,7 @@ function fetch_it(event)
                     {
                         if (uri.includes(base))
                         {
-                            consoleGroup();
+
                             console.info("%cCache not found " + uri, "color: red");
                         }
                         return reject;
@@ -480,7 +475,7 @@ function fetch_it(event)
             {
                 if (!ignoreSrch)
                 {
-                    consoleGroup();
+
                     ignoreSrch = true;//Try it even if there are no that one with saved query string
                     console.log("Trying to find corresponding page without query string...");
                     return cachePromise.catch(() => fallbackPromise);
@@ -492,7 +487,7 @@ function fetch_it(event)
         }
     }
     event.respondWith(getTargetPromise());
-    endGroup();
+
 }
 
 self.addEventListener('message', function (event)
@@ -536,19 +531,6 @@ self.addEventListener('message', function (event)
         self.skipWaiting();
     }
 });
-function consoleGroup()
-{
-    if (!insideConsoleGroup)
-    {
-        console.group("[SW]");
-        insideConsoleGroup = true;
-    }
-}
-function endGroup()
-{
-    insideConsoleGroup = false;
-    console.groupEnd();
-}
 function postMessageToClient(data, targetClientId)
 {
     if (typeof data.messageType == "undefined")
