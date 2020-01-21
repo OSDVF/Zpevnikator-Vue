@@ -175,6 +175,13 @@ body label
 .modal.show .modal-dialog.bottom {
 	transform: translateY(0);
 }
+.modal.fade .modal-dialog.top
+{
+	transform: translateY(-30px);
+}
+.modal.show .modal-dialog.top {
+	transform: translateY(0);
+}
 
 .modal-backdrop,.modal.fade .modal-dialog {
 	transition-duration:.2s !important;

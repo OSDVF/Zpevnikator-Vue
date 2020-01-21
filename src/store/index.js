@@ -64,7 +64,7 @@ export default new Vuex.Store({
     },
     removeTask(state, id)
     {
-      for (var i; i < state.tasks.length; i++)
+      for (var i = 0; i < state.tasks.length; i++)
       {
         if (state.tasks[i].id = id)
           state.tasks.splice(i, 1);
@@ -72,23 +72,9 @@ export default new Vuex.Store({
     }
   },
   getters: {
-    uncompletedTasksCount(state)
-    {
-      var count = 0;
-      for (var i = state.tasks.length - 1; i >= 0; i--)
-        if (state.tasks[i].status != 'completed') count++;
-      return count;
-    },
-    completedTasksCount(state)
-    {
-      var count = 0;
-      for (var i = state.tasks.length - 1; i >= 0; i--)
-        if (state.tasks[i].status == 'completed') count++;
-      return count;
-    }
   },
   actions: {
   },
   modules: {
-  }
+  },
 })

@@ -5,7 +5,8 @@
   "scripts": {
     "Serve": "vue-cli-service serve",
     "Build": "vue-cli-service build",
-    "Build-Modern": "vue-cli-service build --modern"
+    "Build-Modern": "vue-cli-service build --modern",
+    "Build-Dev":"vue-cli-service build --mode development"
   },
   "dependencies": {
     "bootstrap-input-spinner": "^1.13.3",

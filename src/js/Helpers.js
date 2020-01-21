@@ -256,7 +256,7 @@ const NoSleepHelper = {
 			{
 				if (e instanceof ReferenceError)
 				{
-					message('Nepodařilo se načíst součást pro zabránění vypínaní displeje. Možná není úplně stažena.', "danger", 3000, true)
+					UIHelpers.Message('Nepodařilo se načíst součást pro zabránění vypínaní displeje. Možná není úplně stažena.', "danger", 3000, true)
 				}
 			}
 		}
@@ -284,9 +284,11 @@ const UIHelpers = {
 	 * @param {function} positiveEventListener Callback for clicking on the more 'positive' button (ok/yes)
 	 * @returns {JQuery<HTMLElement>}
 	 */
-	Dialog(text, callback = new Function(), type = UIHelpers.DialogType.Ok, header, footer, positiveEventListener = new Function())
+	Dialog(text, callback, type = UIHelpers.DialogType.Ok, header, footer, positiveEventListener)
 	{
 		UIHelpers.store.commit('addDialog');
+		if(!callback)callback = new Function();
+		if(!positiveEventListener)positiveEventListener = new Function();
 		const newDialog = UIHelpers.appReferences['dialog'+(UIHelpers.store.state.modalsCount-1)][0];//Because Vuex's reaction to commit is too sloow sometimes
 		newDialog.setData(text, callback, type, header, footer, positiveEventListener);
 		newDialog.show();

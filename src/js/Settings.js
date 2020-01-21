@@ -1,340 +1,309 @@
+import { NoSleepHelper } from '../js/Helpers';
+
 ///
 ///Customization
 ///
 var Settings = {
-	KeyPrefix:'pref-',
-	SetTransposition: function(amount,songid)
+	KeyPrefix: 'pref-',
+	changeTheme(toWhat, forceIt)
 	{
-		localStorage.setItem(Settings.KeyPrefix+'transposition_'+songid,amount);
+		if (this.Theme != toWhat || forceIt)
+		{
+			this.Theme = toWhat;
+			this.applyThemeToComponents($('body'));
+			$("meta[name='theme-color']").attr("content", toWhat == 'dark' ? "#424242" : process.env.VUE_APP_THEME_COLOR);
+		}
 	},
-	GetTransposition: function(songid)
+	applyThemeToComponents(parent)
 	{
-		return localStorage.getItem(Settings.KeyPrefix+'transposition_'+songid) || 0;
+		parent.find(".dark, .light").toggleClass("dark").toggleClass("light");
+		parent.find(".btn-outline-dark, .btn-outline-light").toggleClass("btn-outline-dark").toggleClass("btn-outline-light");
+		parent.find(".bg-light, .bg-dark").toggleClass("bg-light").toggleClass("bg-dark");
+		parent.find(".text-light, .text-dark").toggleClass("text-light").toggleClass("text-dark");
+		if (this.Theme == 'dark')
+		{
+			parent.find(".btn-light").toggleClass("btn-dark").toggleClass("btn-light");
+			parent.find(".bg-white").toggleClass("bg-white").toggleClass("bg-black");
+			parent.find(".table-light").toggleClass("table-light").toggleClass("table-dark");
+			parent.find(".list-group-item").addClass("list-group-item-dark");
+			parent.find(".bg-light-3").removeClass("bg-light-3").addClass("bg-dark-3");
+		}
+		else
+		{
+			parent.find(".btn-dark").toggleClass("btn-dark").toggleClass("btn-light");
+			parent.find(".bg-black").toggleClass("bg-white").toggleClass("bg-black");
+			parent.find(".table-dark").toggleClass("table-light").toggleClass("table-dark");
+			parent.find(".list-group-item-dark").removeClass("list-group-item-dark");
+			parent.find(".bg-dark-3").addClass("bg-light-3").removeClass("bg-dark-3");
+		}
+		var selects = parent.find('*[data-style=btn-dark], *[data-style=btn-light]');
+		if (selects.attr('data-style') == 'btn-light')
+		{
+			selects.attr('data-style', "btn-dark");
+		} else
+		{
+			selects.attr('data-style', "btn-light");
+		}
+	},
+	applySettings()
+	{
+		this.changeTheme($("#themeSelect").val());
+		Settings.ShowChords = document.getElementById("showChords").checked;
+		Settings.FixedNavbar = document.getElementById("fixedNavbar").checked;
+		Settings.ShowReloadPrompt = document.getElementById('showReloadPrompt').checked;
+		Settings.Optimizations = document.getElementById('optimizations').checked;
+		Settings.TablePaging = document.getElementById("tablePaging").checked;
+		Settings.EnableNotifications = document.getElementById("notifEnable").checked;
+		if (Settings.EnableNotifications)
+		{
+			//initialisePush();
+			$("#notificationStatus").removeClass("d-none");
+		}
+		else
+		{
+			$("#notificationStatus").addClass("d-none");
+		}
+		Settings.WakeLock = document.getElementById("wakeLock").checked;
+		if (!Settings.WakeLock)
+		{
+			NoSleepHelper._nosleep.disable();
+		}
+
+		/*this.applyCustomization();
+		this.updateSettingsIndicators();*/
+	},
+	set LineHeight(spacing)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'lineHeight', spacing);
+	},
+	get LineHeight()
+	{
+		return localStorage.getItem(Settings.KeyPrefix + 'lineHeight') || 1.5;
+	},
+	set ParagraphMargin(spacing)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'pMargin', spacing);
+	},
+	get ParagraphMargin()
+	{
+		return localStorage.getItem(Settings.KeyPrefix + 'pMargin') || 1;
+	},
+	/*get AlterationChange()
+	{
+		return localStorage.getItem(Settings.KeyPrefix + 'alterationChange_' + GET['id']) == "true" || false;
+	},
+	set AlterationChange(change)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'alterationChange_' + GET['id'], change);
+	},*/
+	get Optimizations()
+	{
+		var sh = localStorage.getItem(Settings.KeyPrefix + 'optimizations');
+		return sh === "true" || false;
+	},
+	set Optimizations(sh)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'optimizations', sh);
+	},
+	get ShowOptionalChords()
+	{
+		var sh = localStorage.getItem(Settings.KeyPrefix + 'showOptional');
+		return sh === "false" ? false : true;
+	},
+	set ShowOptionalChords(sh)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'showOptional', sh);
+	},
+	get ShowBassChords()
+	{
+		var sh = localStorage.getItem(Settings.KeyPrefix + 'showBass');
+		return sh === "false" ? false : true;
+	},
+	set ShowBassChords(sh)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'showBass', sh);
+	},
+	get ShowReloadPrompt()
+	{
+		var sh = localStorage.getItem(Settings.KeyPrefix + 'showReloadPrompt');
+		return sh == "true";
+	},
+	set ShowReloadPrompt(sh)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'showReloadPrompt', sh);
+	},
+	get WakeLock()
+	{
+		var wakelock = localStorage.getItem(Settings.KeyPrefix + 'wakeLock');
+		return wakelock === "false" ? false : true;
+	},
+	set WakeLock(wakelock)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'wakeLock', wakelock);
+	},
+	get FixedNavbar()
+	{
+		return localStorage.getItem(Settings.KeyPrefix + 'fixedNavbar') == "false" ? false : true;
+	},
+	set FixedNavbar(display)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'fixedNavbar', display);
+	},
+	get ShowChords()
+	{
+		var show = localStorage.getItem(Settings.KeyPrefix + 'showChords');
+		return show === "false" ? false : true;
+	},
+	set ShowChords(show)
+	{
+		localStorage.setItem(Settings.KeyPrefix + 'showChords', show);
 	}
 };
-Object.defineProperties(Settings,{
-	LineHeight: {
-		set: function(spacing)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'lineHeight',spacing);
-		},
-		get: function()
-		{
-			return localStorage.getItem(Settings.KeyPrefix+'lineHeight') || 1.5;
-		}
-	},
-	ParagraphMargin:{
-		set: function(spacing)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'pMargin',spacing);
-		},
-		get: function()
-		{
-			return localStorage.getItem(Settings.KeyPrefix+'pMargin') || 1;
-		}
-	},
-	AlterationChange:{
-		get: function()
-		{
-			return localStorage.getItem(Settings.KeyPrefix+'alterationChange_' + GET['id']) == "true" || false;
-		},
-		set: function(change)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'alterationChange_'+ GET['id'],change);
-		}
-	},
-	Optimizations:{
-		get: function()
-		{
-			var sh = localStorage.getItem(Settings.KeyPrefix+'optimizations');
-			return sh === "true" ||false;
-		},
-		set: function(sh)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'optimizations',sh);
-		}
-	},
-	ShowOptionalChords:{
-		get: function()
-		{
-			var sh = localStorage.getItem(Settings.KeyPrefix+'showOptional');
-			return sh === "false"? false : true;
-		},
-		set: function(sh)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'showOptional',sh);
-		}
-	},
-	ShowBassChords:{
-		get: function()
-		{
-			var sh = localStorage.getItem(Settings.KeyPrefix+'showBass');
-			return sh === "false"? false : true;
-		},
-		set: function(sh)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'showBass',sh);
-		}
-	},
-	ShowReloadPrompt:{
-		get: function()
-		{
-			var sh = localStorage.getItem(Settings.KeyPrefix+'showReloadPrompt');
-			return sh == "true";
-		},
-		set: function(sh)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'showReloadPrompt',sh);
-		}
-	},
-	WakeLock:{
-		get: function()
-		{
-			var wakelock = localStorage.getItem(Settings.KeyPrefix+'wakeLock');
-			return wakelock === "false"? false : true;
-		},
-		set: function(wakelock)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'wakeLock',wakelock);
-		}
-	},
-	FixedNavbar:{
-		get:function()
-		{
-			return localStorage.getItem(Settings.KeyPrefix+'fixedNavbar') == "false"?false : true;
-		},
-		set: function(display)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'fixedNavbar',display);
-		}
-	},
-	ShowChords:
-	{
-		get: function(){
-			var show = localStorage.getItem(Settings.KeyPrefix+'showChords');
-			return show === "false"? false : true;
-		},
-		set: function(show)
-		{
-			localStorage.setItem(Settings.KeyPrefix+'showChords',show);
-		}
-	},
+Object.defineProperties(Settings, {
 	TablePaging:
 	{
-		get: function(){
-			var paging = localStorage.getItem(Settings.KeyPrefix+'tablePaging');
+		get: function ()
+		{
+			var paging = localStorage.getItem(Settings.KeyPrefix + 'tablePaging');
 			return paging == "true";
 		},
-		set: function(paging)
+		set: function (paging)
 		{
-			localStorage.setItem(Settings.KeyPrefix+'tablePaging',paging);
+			localStorage.setItem(Settings.KeyPrefix + 'tablePaging', paging);
 		}
 	},
-	CookiesAccepted:{
-		get: function(){
-			var val = localStorage.getItem(Settings.KeyPrefix+'DataAccepted');
+	CookiesAccepted: {
+		get: function ()
+		{
+			var val = localStorage.getItem(Settings.KeyPrefix + 'DataAccepted');
 			return val == "true";
 		},
-		set: function(val)
+		set: function (val)
 		{
-			localStorage.setItem(Settings.KeyPrefix+'DataAccepted',val);
+			localStorage.setItem(Settings.KeyPrefix + 'DataAccepted', val);
 		}
 	},
-	ViewedAddSongTutor:{
-		get: function(){
-			var val = localStorage.getItem(Settings.KeyPrefix+'ViewedAddSongTutor');
+	ViewedAddSongTutor: {
+		get: function ()
+		{
+			var val = localStorage.getItem(Settings.KeyPrefix + 'ViewedAddSongTutor');
 			return val == "true";
 		},
-		set: function(val)
+		set: function (val)
 		{
-			localStorage.setItem(Settings.KeyPrefix+'ViewedAddSongTutor',val);
+			localStorage.setItem(Settings.KeyPrefix + 'ViewedAddSongTutor', val);
 		}
 	},
-	ShownNoteInfo:{
-		get: function(){
-			var val = localStorage.getItem(Settings.KeyPrefix+'ShownNoteInfo');
+	ShownNoteInfo: {
+		get: function ()
+		{
+			var val = localStorage.getItem(Settings.KeyPrefix + 'ShownNoteInfo');
 			return val == "true";
 		},
-		set: function(val)
+		set: function (val)
 		{
-			localStorage.setItem(Settings.KeyPrefix+'ShownNoteInfo',val);
+			localStorage.setItem(Settings.KeyPrefix + 'ShownNoteInfo', val);
 		}
 	},
-	DisplayedOfflineListInfo:{
-		get: function(){
-			var val = localStorage.getItem(Settings.KeyPrefix+'DisplayedOfflineListInfo');
+	DisplayedOfflineListInfo: {
+		get: function ()
+		{
+			var val = localStorage.getItem(Settings.KeyPrefix + 'DisplayedOfflineListInfo');
 			return val == "true";
 		},
-		set: function(val)
+		set: function (val)
 		{
-			localStorage.setItem(Settings.KeyPrefix+'DisplayedOfflineListInfo',val);
+			localStorage.setItem(Settings.KeyPrefix + 'DisplayedOfflineListInfo', val);
 		}
 	},
-	ShownComunismAlert:{
-		get: function(){
-			var val = localStorage.getItem(Settings.KeyPrefix+'ShownComunismAlert');
+	ShownComunismAlert: {
+		get: function ()
+		{
+			var val = localStorage.getItem(Settings.KeyPrefix + 'ShownComunismAlert');
 			return val == "true";
 		},
-		set: function(val)
+		set: function (val)
 		{
-			localStorage.setItem(Settings.KeyPrefix+'ShownComunismAlert',val);
+			localStorage.setItem(Settings.KeyPrefix + 'ShownComunismAlert', val);
 		}
 	},
-	TextSize:{
-		get: function(){
-			return localStorage.getItem(Settings.KeyPrefix+'textSize')|| '1';
-		},
-		set: function(size)
+	TextSize: {
+		get: function ()
 		{
-			localStorage.setItem(Settings.KeyPrefix+'textSize',size);
+			return localStorage.getItem(Settings.KeyPrefix + 'textSize') || '1';
+		},
+		set: function (size)
+		{
+			localStorage.setItem(Settings.KeyPrefix + 'textSize', size);
 		}
 	},
 	ChordSize: {
-		get: function(){
-			return localStorage.getItem(Settings.KeyPrefix+'chordSize')|| '1';
-		},
-		set: function(size)
+		get: function ()
 		{
-			localStorage.setItem(Settings.KeyPrefix+'chordSize',size);
+			return localStorage.getItem(Settings.KeyPrefix + 'chordSize') || '1';
+		},
+		set: function (size)
+		{
+			localStorage.setItem(Settings.KeyPrefix + 'chordSize', size);
 		}
 	},
 	Theme: {
-		get: function(){
-			return localStorage.getItem(Settings.KeyPrefix+'theme') || 'light';
-		},
-		set: function(theme)
+		get: function ()
 		{
-			localStorage.setItem(Settings.KeyPrefix+'theme',theme);
+			return localStorage.getItem(Settings.KeyPrefix + 'theme') || 'light';
+		},
+		set: function (theme)
+		{
+			localStorage.setItem(Settings.KeyPrefix + 'theme', theme);
 		}
 	},
 
-	PageMargins:{
-		get: function(){
-			return localStorage.getItem(Settings.KeyPrefix+'pageMargins')|| "20";
-		},
-		set: function(margins)
+	PageMargins: {
+		get: function ()
 		{
-			localStorage.setItem(Settings.KeyPrefix+'pageMargins',margins);
+			return localStorage.getItem(Settings.KeyPrefix + 'pageMargins') || "20";
+		},
+		set: function (margins)
+		{
+			localStorage.setItem(Settings.KeyPrefix + 'pageMargins', margins);
 		}
 	},
 	ChordStyle: {
-		get: function()
+		get: function ()
 		{
-			return localStorage.getItem(Settings.KeyPrefix+'chordStyle')|| "above";
+			return localStorage.getItem(Settings.KeyPrefix + 'chordStyle') || "above";
 		},
-		set: function(style)
+		set: function (style)
 		{
-			localStorage.setItem(Settings.KeyPrefix+'chordStyle',style);
+			localStorage.setItem(Settings.KeyPrefix + 'chordStyle', style);
 		}
 	},
-	HighlightAnchors:{
-		get:function(){
-			return localStorage.getItem(Settings.KeyPrefix+'HighlightAnchors') != "false";
+	HighlightAnchors: {
+		get: function ()
+		{
+			return localStorage.getItem(Settings.KeyPrefix + 'HighlightAnchors') != "false";
 		},
-		set: function(val){
-			localStorage.setItem(Settings.KeyPrefix+'HighlightAnchors',val)
+		set: function (val)
+		{
+			localStorage.setItem(Settings.KeyPrefix + 'HighlightAnchors', val)
 		}
 	},
 	EnableNotifications:
 	{
-		get: function(){
-			var enable = localStorage.getItem(Settings.KeyPrefix+'enableNotifications');
-			return enable === "false"? false : true;
-		},
-		set: function(enable)
+		get: function ()
 		{
-			localStorage.setItem(Settings.KeyPrefix+'enableNotifications',enable);
+			var enable = localStorage.getItem(Settings.KeyPrefix + 'enableNotifications');
+			return enable === "false" ? false : true;
+		},
+		set: function (enable)
+		{
+			localStorage.setItem(Settings.KeyPrefix + 'enableNotifications', enable);
 			document.getElementById("notifEnable").checked = enable;
 		}
 	}
 });
-var theme = Settings.Theme;
-/*if(theme=='dark')
-	changeTheme('dark',true);
-$("#themeSelect" ).val(theme);
-function updateAlsoOnLoad()
-{
-	var navbar=$("header.navbar");
-	if(Settings.FixedNavbar)
-	{
-		navbar.addClass("fixed-top");
-		//document.getElementById("swup").parentElement.style.setProperty("--offsetTop", window.innerWidth<768 ? "75px":"100px");
-	}
-	else
-	{
-		navbar.removeClass("fixed-top");
-		navbar.find(".navbar-brand").html("Dorostomládežový Zpěvníkátor");
-		//document.getElementById("swup").parentElement.style.setProperty( "--offsetTop","30px");
-	}
-	if(Settings.Optimizations)
-	{
-		document.body.classList.add("optimizations");
-		if(swup)
-			swup.options.animationSelector = "asd";
-	}
-	else
-	{
-		document.body.classList.remove("optimizations");
-		if(swup)
-			swup.options.animationSelector = '[class^="a-"]:not(button)';
-	}
-}
-updateAlsoOnLoad();
-function updateSettingsIndicators()
-{
-	document.getElementById("notifEnable").checked = Settings.EnableNotifications;
-	document.getElementById("showChords").checked = Settings.ShowChords;
-	document.getElementById("tablePaging").checked = Settings.TablePaging;
-	document.getElementById("wakeLock").checked = Settings.WakeLock;
-	document.getElementById("fixedNavbar").checked = Settings.FixedNavbar;
-	document.getElementById('showReloadPrompt').checked = Settings.ShowReloadPrompt;
-	document.getElementById('optimizations').checked = Settings.Optimizations;
-}
-updateSettingsIndicators();
-function changeTheme(toWhat,forceIt)
-{
-	"use strict";
-	if(theme != toWhat||forceIt)
-	{
-		$(".body-black, .body-white").toggleClass("body-black").toggleClass("body-white");
-		theme = toWhat;
-		applyThemeToComponents($('body'));
-		$(".navbar-light, .navbar-dark").toggleClass("navbar-light").toggleClass("navbar-dark");
+/*
 
-		$("meta[name='theme-color']").attr("content",toWhat =='dark'? "#424242":themeColor);
-		Settings.Theme = theme;
-	}
-}
-function applyThemeToComponents(parent)
-{
-	"use strict";
-	parent.find(".dark, .light").toggleClass("dark").toggleClass("light");
-	parent.find(".btn-outline-dark, .btn-outline-light").toggleClass("btn-outline-dark").toggleClass("btn-outline-light");
-	parent.find(".bg-light, .bg-dark").toggleClass("bg-light").toggleClass("bg-dark");
-	parent.find(".text-light, .text-dark").toggleClass("text-light").toggleClass("text-dark");
-	if(theme == 'dark')
-	{
-		parent.find(".btn-light").toggleClass("btn-dark").toggleClass("btn-light");
-		parent.find(".bg-white").toggleClass("bg-white").toggleClass("bg-black");
-		parent.find(".table-light").toggleClass("table-light").toggleClass("table-dark");
-		parent.find(".list-group-item").addClass("list-group-item-dark");
-		parent.find(".bg-light-3").removeClass("bg-light-3").addClass("bg-dark-3");
-	}
-	else
-	{
-		parent.find(".btn-dark").toggleClass("btn-dark").toggleClass("btn-light");
-		parent.find(".bg-black").toggleClass("bg-white").toggleClass("bg-black");
-		parent.find(".table-dark").toggleClass("table-light").toggleClass("table-dark");
-		parent.find(".list-group-item-dark").removeClass("list-group-item-dark");
-		parent.find(".bg-dark-3").addClass("bg-light-3").removeClass("bg-dark-3");
-	}
-	var selects = parent.find('*[data-style=btn-dark], *[data-style=btn-light]');
-	if (selects.attr('data-style')=='btn-light') {
-		selects.attr('data-style',"btn-dark");
-	} else {
-		selects.attr('data-style', "btn-light");
-	}
-}
 function transposeChord(chord, amount) {
 	"use strict";
 	const scale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"];
@@ -539,51 +508,6 @@ function applyCustomization()
 	document.getElementById("showOptional").checked = Settings.ShowOptionalChords;
 	document.getElementById("showBass").checked = Settings.ShowBassChords;
 }
-function applySettings()
-{
-	"use strict";
-	try
-	{
-		changeTheme($( "#themeSelect" ).val());
-		Settings.ShowChords = document.getElementById("showChords").checked;
-		Settings.FixedNavbar = document.getElementById("fixedNavbar").checked;
-		Settings.ShowReloadPrompt = document.getElementById('showReloadPrompt').checked;
-		Settings.Optimizations = document.getElementById('optimizations').checked;
-		if(Settings.TablePaging != document.getElementById("tablePaging").checked)
-		{
-			message("Načtěte znova stránku pro použití","info",null,true);
-		}
-		Settings.TablePaging = document.getElementById("tablePaging").checked;
-		Settings.EnableNotifications = document.getElementById("notifEnable").checked;
-		if(Settings.EnableNotifications)
-		{
-			initialisePush();
-			$("#notificationStatus").removeClass("d-none");
-		}
-		else
-		{
-			$("#notificationStatus").addClass("d-none");
-		}
-		updateAlsoOnLoad();
-		var newWakeLockVal = document.getElementById("wakeLock").checked;
-		if(!Settings.WakeLock&&newWakeLockVal)
-			dialog("Vypnutí displeje bude zabráněno jen po kliknutí na některý řádek v seznamu písní a zobrazení písně<br><small>(Omezení systému)</small>");
-		Settings.WakeLock = newWakeLockVal;
-		if(!Settings.WakeLock)
-		{
-			noSleep.disable();
-			noSleep.enabled = false;
-		}
 
-		applyCustomization();
-		updateSettingsIndicators();
-		message("Nastavení uloženo","success",3000);
-		$('#settingsWidnow').modal('hide');
-	}catch(e){
-		if(typeof Sentry != 'undefined')
-			Sentry.captureException(e);
-		message("Chyba při ukládání nastavení","danger");
-	}
-}
 $('#customization').on('show.md.navdrawer',function(){$('#mainNavCollapse').collapse('hide')});*/
 export default Settings;

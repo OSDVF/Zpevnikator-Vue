@@ -1,16 +1,17 @@
 //Includes all the global hooks for external scripts which should be executed after DOM load
 
-import { UIHelpers, WorkerStates } from './Helpers'
+import { UIHelpers, WorkerStates, Environment } from './Helpers'
 import Tasks from './Tasks'
 var pendingReady = [];
 const manager = {
     /**
      * @type Vue
      */
-    _vue:null,
-    set Vue(to){
-this._vue = to;
-UIHelpers.store = to.$store;
+    _vue: null,
+    set Vue(to)
+    {
+        this._vue = to;
+        UIHelpers.store = to.$store;
     },
     get Vue()
     {
@@ -24,9 +25,60 @@ UIHelpers.store = to.$store;
     },
     setupSWMessageBus: setupSWMessageBus,
     workerReadyWaiting: [],
+    registerSync: registerSync,
     navigate(url)
     {
         this._vue.$router.push(url);
+    },
+    appDownload()
+    {
+        if (Environment.InsidePwa)
+        {
+            UIHelpers.Message("Aplikace je již nainstalována");
+        }
+
+        if (('serviceWorker') in navigator)
+        {
+            function doTheInstallation()
+            {
+                if (deferredPrompt)
+                {
+                    $("#offlineEnable").html("Instalace...");
+                    deferredPrompt.prompt();
+                    // Wait for the user to respond to the prompt
+                    deferredPrompt.userChoice.then(function (choiceResult)
+                    {
+                        if (choiceResult.outcome === 'accepted')
+                        {
+                            $("#offlineEnable").html("Aplikace nainstalována");
+                        } else
+                        {
+                            $("#offlineEnable").html("Stáhnout aplikaci");
+                        }
+                        disableProgressIndicator("#installation");
+                    });
+                }
+                else
+                {
+                    disableProgressIndicator("#installation");
+                    $("#manualInstallPrompt").modal("show");
+                }
+            }
+            if (navigator.onLine)
+                doTheInstallation();
+            else
+            {
+                UIHelpers.Dialog("Vypadá to že jste offline. Chcete se přesto pokusit aplikaci instalovat?", function (res)
+                {
+                    if (res == 'yes')
+                        doTheInstallation();
+                }, UIHelpers.DialogType.YesNo, "Pokračovat?")
+            }
+        }
+        else
+        {
+            UIHelpers.Message("Váš prohlížeč nepodporuje offline režim", "danger");
+        }
     }
 }
 export default manager;
@@ -51,7 +103,6 @@ window.addEventListener('beforeinstallprompt', function (e)
     // Stash the event so it can be triggered later.
     manager.deferredPrompt = e;
 });
-
 function setupMultilayerDialogs()
 {
     $(document).on('hidden.bs.modal', '.modal', function ()
@@ -288,7 +339,7 @@ function setupSWMessageBus()
                         UIHelpers.Message("Rozšířené soubory staženy", "success", 2000);
                         if (manager.deferredPrompt && navigator.onLine)//Pro jistotu, nikdy nevíme jestli 
                         {
-                            UIHelpers.Dialog("Zpěvníkátor je možné instalovat jako klasickou aplikaci na vaše zařízení. Budete tam ke všem písním mít snadný offline přístup.<br>Nyní je aplikace zpěvníku připravena k instalaci. Chcete ji instalovat?", null, DialogType.YesNo, "Aplikace připravena", null, appDownload);
+                            UIHelpers.Dialog("Zpěvníkátor je možné instalovat jako klasickou aplikaci na vaše zařízení. Budete tam ke všem písním mít snadný offline přístup.<br>Nyní je aplikace zpěvníku připravena k instalaci. Chcete ji instalovat?", null, UIHelpers.DialogType.YesNo, "Aplikace připravena", null, manager.appDownload);
                         }
                         if (manager.dowTsk)
                             manager.dowTsk.completed();

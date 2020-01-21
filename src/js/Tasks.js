@@ -18,8 +18,11 @@ class Task
     completed()
     {
         this.state = 'completed';
-        globalManager.Vue.$store.commit('removeTask', this.id);
         Tasks.updateTaskCount();
+    }
+    delete()
+    {
+        globalManager.Vue.$store.commit('removeTask', this.id);
     }
 }
 const Tasks = {
@@ -55,10 +58,11 @@ const Tasks = {
             }
         }
     },
-    AddActive: function (name, description, icon) //Returns "Task" object
+    AddActive(name, description, icon) //Returns "Task" object
     {
         const newTask = new Task(name, description, icon);
         newTask.run();
+        return newTask;
         /*var nat = document.getElementById("noActiveTasks");
         if (nat) nat.outerHTML = "";
         for (var newId = 0; newId < this.activeTasks.length; newId++)
@@ -169,11 +173,19 @@ const Tasks = {
     },
     get CompletedCount()
     {
-        return globalManager.Vue.$store.getters.completedTasksCount;
+        const tasks = globalManager.Vue.$store.state.tasks;
+        var count = 0;
+        for (var i = tasks.length - 1; i >= 0; i--)
+            if (tasks[i].state == 'completed') count++;
+        return count;
     },
     get UncompletedCount()
     {
-        return globalManager.Vue.$store.getters.uncompletedTasksCount;
+        const tasks = globalManager.Vue.$store.state.tasks;
+        var count = 0;
+        for (var i = tasks.length - 1; i >= 0; i--)
+            if (tasks[i].state != 'completed') count++;
+        return count;
     }
 };
 export default Tasks;

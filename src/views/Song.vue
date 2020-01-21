@@ -3,9 +3,9 @@
     <div class="float-md-right">
       <div id="transpositionInfo" class="text-secondary font-weight-bold">{{transpositionInfo}}</div>
     </div>
-    <div id="songWrapper" v-html="songHtml">
+    <div id="songWrapper" v-html="songHtml" :style="wrapperStyle" :class='wrapperClasses'>
     </div>
-    <div class="pb-2 d-flex flex-row-reverse" style="margin-top:-20px">
+    <div :class="['pb-2 flex-row-reverse',lastSongResponse==null?'d-none':'d-flex']" style="margin-top:-20px">
       <button data-target="#songInfo" data-toggle="collapse" class="text-muted btn btn-outline-light"><i class="material-icons">info</i></button>
     </div>
     <div class="collapse" id="songInfo">
@@ -45,6 +45,7 @@ const failText =
 const offlineFailText =
 	'<p><i class="material-icons">explore_off</i><i class="material-icons">language</i><i class="material-icons">not_interested</i><br><br>Tato píseň byla pravděpodobně uložena offline na vašem zařízení ale nyní nebyla nalezena</p>';
 const opt = { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" };
+const loadingBar = '<div class="progress"><div class="progress-bar progress-bar-indeterminate" role="progressbar"></div></div>';
 import { NetworkUtils, SongProcessing, UIHelpers, IOUtils } from "../js/Helpers";
 import Settings from "../js/Settings";
 import { SongDB } from "../js/databases/SongDB";
@@ -55,15 +56,25 @@ export default {
 	data() {
 		return {
 			songInfo: { url: "chyba" },
-			songHtml: "Načítání",
+			songHtml: null,
+			lastSongResponse: null,
 			transpositionInfo: null,
-			info: { lastChanged: "Neznámé", downloaded: "Neznámé", adminUrl: "https://dorostmladez.cz/wp-admin/edit.php?post_type=song" }
+			info: { lastChanged: "Neznámé", downloaded: "Neznámé", adminUrl: "https://dorostmladez.cz/wp-admin/edit.php?post_type=song" },
+			wrapperStyle: {
+				"--lheight": (Settings.ShowChords ? 1 : 0) + parseFloat(Settings.LineHeight),
+				"--lwchheight:": Settings.LineHeight,
+				"--chordSize:": Settings.ChordSize + "rem",
+				"--pMargin": Settings.ParagraphMargin + "rem",
+				"font-size": Settings.TextSize + "rem"
+			},
+			wrapperClasses:false
 		};
 	},
 	mounted() {
 		this.changeDisplayedSong(this.$route.query.id);
 	},
 	activated() {
+		this.songHtml = loadingBar;
 		if (Settings.WakeLock) {
 			$(() => {
 				if (UIHelpers.initializeNoSleep())
@@ -138,18 +149,24 @@ export default {
 			const dwnldPromise = forceFetch ? NetworkUtils.getNoCache(fetchUri) : NetworkUtils.CacheOrNetwork(fetchUri);
 			dwnldPromise
 				.then(response => {
-					response.text().then(html => (_class.songHtml = Settings.HighlightAnchors ? SongProcessing.makeRightSequencesBold(html) : html));
+					response.text().then(html => {
+						_class.songHtml = Settings.HighlightAnchors ? SongProcessing.makeRightSequencesBold(html) : html;
+						_class.lastSongResponse = html;
+						this.$nextTick(this.applyCustomization)
+					}); //Very nice one-liner 🙃
 
 					this.info.lastChanged = new Date(response.headers.get("Last-Modified")).toLocaleDateString("cs-CZ", opt);
 					//nevím proč, ale Cloudfalre háže datum stažení do hlavičky Expires což je mi teď celkem užitečné :D
-          this.info.downloaded = new Date(response.headers.get("Expires")).toLocaleDateString("cs-CZ", opt);
-          if(forceFetch) UIHelpers.Message("Aktualizována","success",1000);
+					this.info.downloaded = new Date(response.headers.get("Expires")).toLocaleDateString("cs-CZ", opt);
+					//We use forceFetch only when we are updating current song so we can show this nice message
+					if (forceFetch) UIHelpers.Message("Aktualizována", "success", 1000);
 				})
 				.catch(() => {
 					this.songHtml = url.startsWith("offline:") ? offlineFailText : failText;
-        });
-        //Doesn't really belong here, but we are setting forceFetch only on song update so...
-        if(forceFetch) UIHelpers.Message("Aktualizace písně");
+					this.lastSongResponse = null;
+				});
+			//Doesn't really belong here, but we are setting forceFetch only on song update so...
+			if (forceFetch) UIHelpers.Message("Aktualizace písně");
 		},
 
 		exportText() {
@@ -160,13 +177,14 @@ export default {
 			var blob = IOUtils.CreateTxtBlob(cloned.text());
 			var url = URL.createObjectURL(blob);
 			var w = window.open(url);
-			w.onload = ()=> {
+			w.onload = () => {
 				w.document.title = this.songInfo.name;
 				URL.revokeObjectURL(url);
 			};
+			cloned.remove();
 		},
 		downloadSong() {
-			const sInfo = { info: this.songInfo, contents: this.songHtml };
+			const sInfo = { info: this.songInfo, contents: this.lastSongResponse };
 			if (sInfo.info.status) delete sInfo.info.status;
 			if (sInfo.info.offlineOnly) delete sInfo.info.offlineOnly;
 			var pson = new PSON.StaticPair();
@@ -226,11 +244,182 @@ export default {
 						});
 				}
 			);
-    },
-    edit()
-    {
-      this.$route.push({name:'edit',query:this.songInfo.url});
-    }
+		},
+		edit() {
+			this.$route.push({ name: "edit", query: this.songInfo.url });
+		},
+		transposeChord(chord, amount) {
+			if(!amount)
+				return chord;
+			const scale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"];
+			var matchedh = [];
+			var normal = chord.replace(/([CDEFGAH](?![#b]))/g, function(match) {
+				var i = (scale.indexOf(match) + amount) % scale.length;
+				var changed = scale[i < 0 ? i + scale.length : i];
+				matchedh.push(changed);
+				return changed;
+			});
+			var withHash = normal.replace(/[CDEFGAH]#/g, function(match) {
+				if (matchedh.includes(match)) return match;
+				var i = (scale.indexOf(match) + amount) % scale.length;
+				chord;
+				var changed = scale[i < 0 ? i + scale.length : i];
+				matchedh.push(changed);
+				return changed;
+			});
+			var withB = withHash.replace(/[CDEFGAH]b/g, function(match) {
+				if (matchedh.includes(match)) return match;
+				let altered = changeAlteration(match);
+				let i = (scale.indexOf(altered) + amount) % scale.length;
+				chord;
+				return changeAlteration(scale[i < 0 ? i + scale.length : i]);
+			});
+			return withB;
+		},
+		changeAlteration(chord) {
+			const sharps = ["C#", "D#", "F#", "G#", "A#"];
+			const flats = ["Db", "Eb", "Gb", "Ab", "Hb"];
+			const neutral = ["C", "D", "E", "F", "G", "A", "H"];
+			for (var i = 0; i < sharps.length; i++) {
+				if (chord.includes(sharps[i])) {
+					return chord.replace(sharps[i], flats[i]);
+				} else if (chord.includes(flats[i])) {
+					return chord.replace(flats[i], sharps[i]);
+				}
+			}
+			for (var i = 0; i < neutral.length; i++) {
+				if (chord.includes(neutral[i])) {
+					return chord;
+				}
+			}
+			console.error('Found chord "' + chord + '" in which alteration cannot be changed');
+			return chord;
+		},
+		applyChordSpacing() {
+			$("i.space").remove();
+			var wrp = document.getElementById("songWrapper");
+			if (!wrp) return;
+			var wrpRight = wrp.getBoundingClientRect().right;
+			$(".chord+.lyric+.chord").each(function() {
+				var preceedingLyric = this.previousElementSibling;
+				var preceedingChord = preceedingLyric.previousElementSibling; //Now select previous chord
+				var nextLyric = this.nextElementSibling;
+				if (preceedingChord.offsetTop + preceedingChord.offsetHeight < nextLyric.offsetTop) {
+					if (preceedingChord.offsetTop == this.offsetTop) {
+						//Chords are on same line
+						var spaceElem = document.createElement("i");
+						spaceElem.className = "space break";
+						this.parentNode.insertBefore(spaceElem, this);
+					}
+					return; //If we are on different line that preceeding chord
+				}
+				var lastTextInLyric;
+				for (var child of preceedingLyric.childNodes) {
+					if (child.nodeName == "#text") {
+						lastTextInLyric = child;
+					} else if (child.nodeName == "BR") return;
+					else if (child.nodeName === "B") {
+						for (var child2 of child.childNodes) {
+							//To make emphasized sequences work
+							if (child2.nodeName == "#text") {
+								lastTextInLyric = child2;
+							} else if (child2.nodeName == "BR") return;
+						}
+					}
+				}
+				var range = document.createRange();
+				range.selectNode(lastTextInLyric);
+				var rect = range.getBoundingClientRect();
+				range.detach();
+				var spaceElem = document.createElement("i");
+				spaceElem.className = "space";
+				spaceElem.style.width = preceedingChord.clientWidth - rect.width + 5 + "px";
+				this.parentNode.insertBefore(spaceElem, this);
+			});
+		},
+		applyTransposition(amount) {
+			const _class = this;
+			$("#songWrapper .chord").each(function() {
+				var elem = $(this);
+				if (!elem.attr("data-original")) elem.attr("data-original", this.innerHTML);
+				elem.html(
+					_class.transposeChord(
+						elem.attr("data-original"), //Get the original chord and transpose it
+						amount * 2
+					)
+				);
+			});
+			this.applyChordSpacing();
+			if (!amount) {
+				$("#transpositionInfo").html("");
+			} else {
+				$("#transpositionInfo").html("Transponováno o " + amount.toString() + (amount < 0 ? " dolů" : " nahoru"));
+			}
+		},
+		alterAll() {
+			$(".chord").each(function() {
+				const elem = this;
+				elem.innerHTML = changeAlteration(elem.innerHTML);
+			});
+		},
+		optionalChords(show) {
+			if (show) $("#songWrapper .chord:contains('(')").show();
+			else $("#songWrapper .chord:contains('(')").hide();
+		},
+		bassChords(show) {
+			if (show) $("#songWrapper .chord .d-none").removeClass("d-none");
+			else {
+				var found = $("#songWrapper .chord span").addClass("d-none").length;
+				if (!found)
+					$("#songWrapper .chord:contains('/')").each(function() {
+						var index = this.innerHTML.indexOf("/");
+						var newSpan = document.createElement("span");
+						newSpan.className = "d-none";
+						newSpan.innerHTML = this.innerHTML.substr(index);
+						this.innerHTML = this.innerHTML.substr(0, index);
+
+						this.appendChild(newSpan);
+					});
+			}
+		},
+		applyCustomization() {
+			this.wrapperStyle = {
+				"--lheight": (Settings.ShowChords ? 1 : 0) + parseFloat(Settings.LineHeight),
+				"--lwchheight:": Settings.LineHeight,
+				"--chordSize:": Settings.ChordSize + "rem",
+				"--pMargin": Settings.ParagraphMargin + "rem",
+				"font-size": Settings.TextSize + "rem"
+			}
+			$("body").css("--mainMargin", "-" + Settings.PageMargins + "px");
+			this.wrapperClasses = '';
+			if (Settings.ShowChords) {
+				if (Settings.ChordStyle == "inside")
+					//Hovorka style
+					this.wrapperClasses += "inside";
+				if (this.songInfo.alterationChange == true) {
+					this.alterAll();
+				}
+				if (Settings.ShowOptionalChords == false) {
+					this.optionalChords(false);
+				}
+				if (Settings.ShowBassChords == false) {
+					this.bassChords(false);
+				}
+				this.applyTransposition(this.songInfo.transposition);
+			} else {
+				this.wrapperClasses += "no-chords";
+			}
+			/*$("#text-size").val(Settings.TextSize);
+			$("#chord-size").val(Settings.ChordSize);
+			$("#line-height").val(Settings.LineHeight);
+			$("#pMargin").val(Settings.ParagraphMargin);
+			$("#page-margins").val(Settings.PageMargins);
+			$("#chordStyle").val(Settings.ChordStyle);
+			$("#chord-shift").val(Settings.GetTransposition(GET["id"]));
+			document.getElementById("alterationChange").checked = Settings.AlterationChange;
+			document.getElementById("showOptional").checked = Settings.ShowOptionalChords;
+			document.getElementById("showBass").checked = Settings.ShowBassChords;*/
+		}
 	}
 };
 </script>

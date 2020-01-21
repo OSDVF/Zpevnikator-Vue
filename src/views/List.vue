@@ -258,9 +258,12 @@ export default {
 			SongDB.downloadIndex(this.updateTable);
 		}
 	},
-	activated()
-	{
-		this.$store.commit('changeTitle','Písně');
+	activated() {
+		this.$store.commit("changeTitle", "Písně");
+		if (localStorage.lastListScroll)
+			//Restore previous scroll position
+			document.documentElement.scrollTop = localStorage.lastListScroll;
+		localStorage.removeItem("lastListScroll");
 	}
 };
 </script>

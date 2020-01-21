@@ -239,13 +239,13 @@ self.addEventListener('install', e =>
                 {
                     postMessageToClient({ messageType: "html-snackbar", html: "<div class=\"snackbar-body\">Nová verze stáhnuta&ensp;</div><button class=\"btn btn-outline-secondary btn-fluid p-2\" type=\"button\" onclick=\"location.reload('true');\">Instalovat</button>", multiline: true, timeout: 10000 })
                     self.skipWaiting();
+                    self.clients.claim()
                 }))
             }
-            self.clients.claim()
         }).then(() =>
         {
             if (!precaching && !precachedEssential)
-                precacheEssential();//Pro jistotu
+                precacheEssential().then(()=>self.clients.claim());//Pro jistotu
         })
     }));
 });
@@ -390,12 +390,14 @@ function fetch_it(event)
                                 return caches.open(extraDownloadedCacheName).then(function (cache)
                                 {
                                     var responseToCache = fetchResponse.clone();
-                                    cache.put(uri, responseToCache);
+                                    if (ignoreSrch)
+                                        cache.put(new URL(uri).pathname, responseToCache);
+                                    else
+                                        cache.put(uri, responseToCache);
                                     return Promise.resolve(fetchResponse);
                                 });
                             }).catch(function (errorArray)
                             {
-
                                 errorArray.forEach(function (err) { console.error(err) })
                             });
                         });
@@ -413,12 +415,11 @@ function fetch_it(event)
                     {
                         if (uri.includes(base))
                         {
-
                             console.info("%cCache not found " + uri, "color: red");
                         }
                         return reject;
                     }
-                    return Promise.resolve(response);
+                    return response;
                 })
             });
         }
@@ -430,7 +431,6 @@ function fetch_it(event)
                     {
                         if (uri.includes(base))
                         {
-
                             console.info("%cCache not found " + uri, "color: red");
                         }
                         return reject;
@@ -438,20 +438,23 @@ function fetch_it(event)
                     return Promise.resolve(response);
                 });
 
-        var fallbackPromise = caches.open(essentialCache).then(function (cache)
+        function fallbackPromise()
         {
-            if (event.request.headers.get('X-Requested-With') == 'SongFetch')//When retrieving as a song(probably)
-                return cache.match(new Request(location.origin + "/not_available.php"));
-            else if (uri.endsWith('.webp') || uri.endsWith('.png') || uri.endsWith('.jpg'))
-                return cache.match(new Request(location.origin + "/images/not_available.png"));
-            else if (!uri.endsWith('.js') && !uri.endsWith('.css') && uri.includes(base) && !uri.includes('/api/'))
-                return cache.match(new Request(location.origin + "/not_available"));//When retrieving as a normal page
-            else return reject;
-        });
+            caches.open(essentialCache).then(function (cache)
+            {
+                if (event.request.headers.get('X-Requested-With') == 'SongFetch')//When retrieving as a song(probably)
+                    return cache.match(new Request(location.origin + "/not_available.php"));
+                else if (uri.endsWith('.webp') || uri.endsWith('.png') || uri.endsWith('.jpg'))
+                    return cache.match(new Request(location.origin + "/images/not_available.png"));
+                else if (!uri.endsWith('.js') && !uri.endsWith('.css') && uri.includes(base) && !uri.includes('/api/'))
+                    return cache.match(new Request(location.origin + "/not_available"));//When retrieving as a normal page
+                else return reject;
+            });
+        }
         let reloaded = false;
         if (request.method === 'POST')
         {
-            return fetchPromise().catch(() => fallbackPromise);
+            return fetchPromise().catch(() => fallbackPromise());
         }
         else if (forceReload)
         {
@@ -460,13 +463,13 @@ function fetch_it(event)
             {
                 pendingOnLoad = [];
                 onNextPageLoad(() => postMessageToClient({ alert: "Nepodařilo se stáhnout stránku", type: "danger" }));
-                return cachePromise.catch(() => fallbackPromise)
+                return cachePromise.catch(() => fallbackPromise())
             })
         }
         else if (request.headers.get("Cache-Control") == "must-revalidate" | request.headers.get("Cache-Control") == "no-cache")//If there was a page reload or user forced reload from network
             return fetchPromise().catch(() =>
                 cachePromise.catch(() =>//Not found anywhere
-                    fallbackPromise
+                    fallbackPromise()
                 )
             )
         else
@@ -475,19 +478,16 @@ function fetch_it(event)
             {
                 if (!ignoreSrch)
                 {
-
                     ignoreSrch = true;//Try it even if there are no that one with saved query string
-                    console.log("Trying to find corresponding page without query string...");
-                    return cachePromise.catch(() => fallbackPromise);
+                    return cachePromise.catch(() => fallbackPromise());
                 }
                 else
-                    return fallbackPromise;
+                    return fallbackPromise();
             })
             )
         }
     }
     event.respondWith(getTargetPromise());
-
 }
 
 self.addEventListener('message', function (event)
