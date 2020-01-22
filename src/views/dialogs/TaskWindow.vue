@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade light" id="tasks" tabindex="-1" role="dialog" aria-labelledby="tasksLabel" aria-hidden="true">
+  <div :class="['modal fade',dark?'dark':'light']" id="tasks" tabindex="-1" role="dialog" aria-labelledby="tasksLabel" aria-hidden="true">
     <div class="modal-dialog fluid top" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -24,15 +24,18 @@
 </template>
 
 <script>
+import Settings from '../../js/Settings';
 export default {
 	data() {
 		return {
 			tasks: this.$store.state.tasks,
-			completedTasks: 0
+      completedTasks: 0,
+      dark: Settings.Theme=='dark'
 		};
 	},
 	mounted() {
 		$(this.$el).on("show.bs.modal", () => {
+      this.dark = Settings.Theme == 'dark'
 			var count = 0;
 			for (var i = this.tasks.length - 1; i >= 0; i--) if (this.tasks[i].state == "completed") count++;
 			this.completedTasks = count;

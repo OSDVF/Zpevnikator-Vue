@@ -54,7 +54,7 @@ export default {
     onSubmit(event) {
       event.preventDefault();
       $("#cookieRequest").modal("hide");
-      if (typeof Settings != "undefined") Settings.CookiesAccepted = true;
+      Settings.Preferences.CookiesAccepted = true;
     }
   }
 };

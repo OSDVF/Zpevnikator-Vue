@@ -17,40 +17,36 @@ const SongDB = {
     },
     downloadIndex(callback)
     {
-        "use strict"
         this.updatingIndex = true;
-        var createIndexTask;
+        let createIndexTask;
         SongDB.onmessage("Aktualizace indexu písní...", null, 2000);
         if (callback)
             $("#songStatus").html("Stahování indexu...");
         createIndexTask = Tasks.AddActive("Stahování seznamu písní", null, "assignment");
-        NetworkUtils.getNoCache(process.env.VUE_APP_REMOTE_URL + '/api/listsongs.php' + (UserStoredInfo.ID ? ('?user=' + UserStoredInfo.ID + '&name=' + UserStoredInfo.Name) : '')).then(function (response)
-        {
-            return response.json();
-        }).then(function (songArray)
+        NetworkUtils.getNoCache(`${process.env.VUE_APP_REMOTE_URL}/api/listsongs.php${UserStoredInfo.ID ? (`?user=${UserStoredInfo.ID}&name=${UserStoredInfo.Name}`) : ''}`).then(response => response.json()).then(songArray =>
         {
             function executeDBTask(songStore)
             {
-                var newSongs = 0;
-                var changedSongs = 0;
+                let newSongs = 0;
+                let changedSongs = 0;
                 for (let i = 0; i < songArray.length; i++)
                 {
-                    SongDB.updateSong(songStore, songArray[i], function (changedInfo)
+                    SongDB.updateSong(songStore, songArray[i], ({ isNew, isChanged }) =>
                     {
-                        if (changedInfo.isNew) newSongs++;
-                        else if (changedInfo.isChanged) changedSongs++;
+                        if (isNew) newSongs++;
+                        else if (isChanged) changedSongs++;
                     });
                 }
                 try
                 {
-                    var cRequest = songStore.openCursor();
-                    cRequest.onsuccess = function (event)
+                    const cRequest = songStore.openCursor();
+                    cRequest.onsuccess = ({ target }) =>
                     {
-                        var cursor = event.target.result;
+                        const cursor = target.result;
                         if (cursor)
                         {
-                            var found = false;
-                            for (var i = 0; i < songArray.length; i++)
+                            let found = false;
+                            for (let i = 0; i < songArray.length; i++)
                             {
                                 if (songArray[i].url == cursor.value.url)
                                 {
@@ -75,33 +71,33 @@ const SongDB = {
                     console.warn(e);
                 }
             }
-            SongDB.write(executeDBTask, null, function ()
+            SongDB.write(executeDBTask, null, () =>
             {
                 createIndexTask.completed();
                 SongDB.updatingIndex = false;
                 if (callback) callback();
-                for (var y = 0; y < SongDB.afterIndexCallbacks.length; y++)
+                for (let y = 0; y < SongDB.afterIndexCallbacks.length; y++)
                     SongDB.afterIndexCallbacks.pop()();
-            }, function ()
+            }, () =>
             {
                 createIndexTask.failed();
-                var str = "Nepodařilo se uložit databázi";
+                const str = "Nepodařilo se uložit databázi";
                 SongDB.onmessage(str, "danger", 2000);
                 createIndexTask.element.find("label").html(str);
                 SongDB.updatingIndex = false;
                 $("#songStatus").html(str);
             })
-        }).catch(function (e)
+        }).catch(e =>
         {
             console.error(e)
             createIndexTask.failed();
-            var str = "Připojení selhalo.";
+            const str = "Připojení selhalo.";
             SongDB.onmessage(str, "danger", 2000);
             createIndexTask.element.find("label").html(str);
             $("#songStatus").html(str);
         })
     },
-    getDB: function (callback)
+    getDB(callback)
     {
         if (this.db)
             callback(this.db);
@@ -113,17 +109,17 @@ const SongDB = {
             this._requestDB();
         }
     },
-    read: function (resolve, reject, oncomplete, onerror)
+    read(resolve, reject, oncomplete, onerror)
     {
-        var _this = this;
-        _this.getDB(function (db)
+        const _this = this;
+        _this.getDB(db =>
         {
             try
             {
-                var trans = db.transaction("songIndex", "readonly");
-                trans.onerror = function (event)
+                const trans = db.transaction("songIndex", "readonly");
+                trans.onerror = ({ target }) =>
                 {
-                    if (onerror) onerror(event.target.error);
+                    if (onerror) onerror(target.error);
                 }
                 trans.oncomplete = oncomplete;
                 if (resolve) resolve(trans.objectStore("songIndex"));
@@ -132,14 +128,14 @@ const SongDB = {
                 if (e.name == 'InvalidStateError')
                 {
                     if (_this.requestingDB)
-                        _this.pendingDBRequests.push(function ()
+                        _this.pendingDBRequests.push(() =>
                         {
-                            _this.getDB(function (db)
+                            _this.getDB(db =>
                             {
-                                var trans = db.transaction("songIndex", "readonly");
-                                trans.onerror = function (event)
+                                const trans = db.transaction("songIndex", "readonly");
+                                trans.onerror = ({ target }) =>
                                 {
-                                    if (onerror) onerror(event.target.error);
+                                    if (onerror) onerror(target.error);
                                 }
                                 trans.oncomplete = oncomplete;
                                 if (resolve) resolve(trans.objectStore("songIndex"));
@@ -148,12 +144,12 @@ const SongDB = {
                     else
                     {
                         _this._requestDB(); //Refresh DB
-                        _this.getDB(function (db)
+                        _this.getDB(db =>
                         {
-                            var trans = db.transaction("songIndex", "readonly");
-                            trans.onerror = function (event)
+                            const trans = db.transaction("songIndex", "readonly");
+                            trans.onerror = ({ target }) =>
                             {
-                                if (onerror) onerror(event.target.error);
+                                if (onerror) onerror(target.error);
                             }
                             trans.oncomplete = oncomplete;
                             if (resolve) resolve(trans.objectStore("songIndex"));
@@ -167,32 +163,32 @@ const SongDB = {
             }
         });
     },
-    get: function (id, resolve, reject)
+    get(id, resolve, reject)
     {
-        SongDB.read(function (songStore)
+        SongDB.read(songStore =>
         {
-            var getReq = songStore.get(id);
-            getReq.onsuccess = function (event)
+            const getReq = songStore.get(id);
+            getReq.onsuccess = ({ target }) =>
             {
-                if (resolve) resolve(event.target.result)
+                if (resolve) resolve(target.result)
             }
-            getReq.onerror = function (event)
+            getReq.onerror = ({ target }) =>
             {
-                if (reject) reject(event.target.error)
+                if (reject) reject(target.error)
             }
         })
     },
-    write: function (resolve, reject, oncomplete, onerror)
+    write(resolve, reject, oncomplete, onerror)
     {
-        var _this = this;
-        _this.getDB(function (db)
+        const _this = this;
+        _this.getDB(db =>
         {
             try
             {
-                var trans = db.transaction("songIndex", "readwrite");
-                trans.onerror = function (event)
+                const trans = db.transaction("songIndex", "readwrite");
+                trans.onerror = ({ target }) =>
                 {
-                    if (onerror) onerror(event.target.error);
+                    if (onerror) onerror(target.error);
                 }
                 trans.oncomplete = oncomplete;
                 if (resolve) resolve(trans.objectStore("songIndex"));
@@ -202,12 +198,12 @@ const SongDB = {
                 {
                     _this.db = null;
                     _this._requestDB(); //Refresh DB
-                    _this.getDB(function (db)
+                    _this.getDB(db =>
                     {
-                        var trans = db.transaction("songIndex", "readwrite");
-                        trans.onerror = function (event)
+                        const trans = db.transaction("songIndex", "readwrite");
+                        trans.onerror = ({ target }) =>
                         {
-                            if (onerror) onerror(event.target.error);
+                            if (onerror) onerror(target.error);
                         }
                         trans.oncomplete = oncomplete;
                         if (resolve) resolve(trans.objectStore("songIndex"));
@@ -220,21 +216,21 @@ const SongDB = {
             }
         });
     },
-    updateSong: function (songStore, songInfo, callback)
+    updateSong(songStore, songInfo, callback)
     {
-        var result = {
+        const result = {
             isNew: false,
             isChanged: false
         };
 
         function upd()
         {
-            var readRequest = songStore.get(songInfo.url);
-            readRequest.onsuccess = function (event)
+            const readRequest = songStore.get(songInfo.url);
+            readRequest.onsuccess = ({ target }) =>
             {
-                if (event.target.result)
+                if (target.result)
                 {
-                    if (event.target.result.name != songInfo.name || event.target.result.video != songInfo.video || event.target.result.author != songInfo.author || event.target.result.language != songInfo.language)
+                    if (target.result.name != songInfo.name || target.result.video != songInfo.video || target.result.author != songInfo.author || target.result.language != songInfo.language)
                         result.isChanged = true;
                 } else
                     result.isNew = true;
@@ -244,32 +240,32 @@ const SongDB = {
         }
         if (!songStore)
         {
-            SongDB.getDB(function (db)
+            SongDB.getDB(db =>
             {
-                var trans = db.transaction("songIndex", "readwrite");
+                const trans = db.transaction("songIndex", "readwrite");
                 songStore = trans.objectStore("songIndex");
                 upd();
             });
         } else upd();
 
     },
-    Exists: function (songStore, songId, resolve, reject)
+    Exists(songStore, songId, resolve, reject)
     {
-        var readRequest = songStore.get(songId);
-        readRequest.onsuccess = function (event)
+        const readRequest = songStore.get(songId);
+        readRequest.onsuccess = ({ target }) =>
         {
-            if (event.target.result)
+            if (target.result)
             {
-                if (resolve) resolve(event.target.result);
+                if (resolve) resolve(target.result);
             } else
                 if (reject) reject();
         }
     },
-    Inject: function (cache, songId, contents)
+    Inject(cache, songId, contents)
     {
-        var url = location.protocol + "//" + location.host + "/api/getsong.php?id=" + songId + "&nospace=true";
-        var req = new Request(url);
-        var hdr = new Headers();
+        const url = `${location.protocol}//${location.host}/api/getsong.php?id=${songId}&nospace=true`;
+        const req = new Request(url);
+        const hdr = new Headers();
         hdr.append("Referer", url);
         return cache.put(req, new Response(new Blob([contents], {
             type: 'text/html;charset=utf-8'
@@ -277,24 +273,24 @@ const SongDB = {
             headers: hdr
         }));
     },
-    informAboutChanges: function (changedSongs, newSongs)
+    informAboutChanges(changedSongs, newSongs)
     {
         if (changedSongs)
             if (newSongs)
-                SongDB.onmessage(newSongs + " nových a " + changedSongs + " změněných písní v seznamu", null, 2500);
+                SongDB.onmessage(`${newSongs} nových a ${changedSongs} změněných písní v seznamu`, null, 2500);
             else
-                SongDB.onmessage(changedSongs + " změněných písní v seznamu", null, 2500);
+                SongDB.onmessage(`${changedSongs} změněných písní v seznamu`, null, 2500);
         else
             if (newSongs)
-                SongDB.onmessage(newSongs + " nových písní v seznamu", null, 2500);
+                SongDB.onmessage(`${newSongs} nových písní v seznamu`, null, 2500);
     },
-    _requestDB: function ()
+    _requestDB()
     {
         this.requestingDB = true;
-        var _class = this;
+        const _class = this;
         try
         {
-            var request;
+            let request;
             if (typeof shimIndexedDB != 'undefined' && (/^((?!chrome|android).)*safari/i.test(navigator.userAgent)))
             {
                 shimIndexedDB.__setConfig({
@@ -306,43 +302,43 @@ const SongDB = {
                 request = shimIndexedDB.open(dbName, buildNumber)
             } else
                 request = indexedDB.open(dbName, buildNumber);
-            request.onerror = function (event)
+            request.onerror = ({ target }) =>
             {
-                var err = 'Chyba při přístupu k indexu. //Kód chyby ' + event.target.error.code;
+                const err = `Chyba při přístupu k indexu. //Kód chyby ${target.error.code}`;
                 SongDB.onmessage(err, 'danger', 7000, true);
                 if (typeof (Sentry) != 'undefined')
-                    Sentry.captureException(event.target.error);
+                    Sentry.captureException(target.error);
                 _class.requestingDB = false;
-                console.error(event.target.error)
+                console.error(target.error)
                 if (NetworkUtils.revalidateCache) NetworkUtils.revalidateCache("version.js");
             };
-            var upgraded = false;
-            request.onsuccess = function (event)
+            let upgraded = false;
+            request.onsuccess = ({ target }) =>
             {
-                _class.db = event.target.result;
+                _class.db = target.result;
                 _class.requestingDB = false;
                 if (!upgraded) //To not run twice when upgrade wa needed
-                    for (var i = 0; i < _class.pendingDBRequests.length; i++)
+                    for (let i = 0; i < _class.pendingDBRequests.length; i++)
                         _class.pendingDBRequests.pop()(_class.db);
             };
-            request.onblocked = function (event)
+            request.onblocked = ({ target }) =>
             {
-                console.error("Blocked indexedDB: ", event.target.error)
+                console.error("Blocked indexedDB: ", target.error)
             };
-            request.onupgradeneeded = function (event)
+            request.onupgradeneeded = ({ target }) =>
             {
                 upgraded = true;
                 // Save the IDBDatabase interface
-                _class.db = event.target.result;
-                var offlines = [];
+                _class.db = target.result;
+                const offlines = [];
                 if (_class.db.objectStoreNames.contains("songIndex"))
                 {
-                    var trans = event.target.transaction;
-                    var songStore = trans.objectStore("songIndex");
-                    var req = songStore.openCursor();
-                    req.onsuccess = function (event)
+                    const trans = target.transaction;
+                    const songStore = trans.objectStore("songIndex");
+                    const req = songStore.openCursor();
+                    req.onsuccess = ({ target }) =>
                     {
-                        var cursor = event.target.result;
+                        const cursor = target.result;
                         if (cursor)
                         {
                             if (cursor.value.offlineOnly || cursor.value.imported)
@@ -366,29 +362,29 @@ const SongDB = {
                     {
                         console.log("Song index doesn't exist...");
                     } //Tohle je jenom pro jistotu
-                    var objectStore;
+                    let objectStore;
                     objectStore = _class.db.createObjectStore("songIndex", {
                         keyPath: "url"
                     });
-                    for (var entry of offlines)
+                    for (const entry of offlines)
                     {
                         objectStore.put(entry);
                     }
                     console.log("Created song index DB");
                     if (!SongDB.updatingIndex)
-                        SongDB.downloadIndex(function ()
+                        SongDB.downloadIndex(() =>
                         {
-                            for (var i = 0; i < _class.pendingDBRequests.length; i++)
+                            for (let i = 0; i < _class.pendingDBRequests.length; i++)
                                 _class.pendingDBRequests.pop()(_class.db);
                         });
                 }
             }
-            request.onversionchange = function (event)
+            request.onversionchange = ({ target }) =>
             {
                 console.info("SongDB changing version");
                 if (_class.deleting)
                 {
-                    event.target.close();
+                    target.close();
                     console.log("Connection closed for deleting the DB");
                     return;
                 }
@@ -398,9 +394,9 @@ const SongDB = {
             console.error(e)
         }
     },
-    close: function (resolve, reject)
+    close(resolve, reject)
     {
-        var _this = this;
+        const _this = this;
         _this.requestingDB = false;
         if (_this.db)
         {
@@ -409,21 +405,21 @@ const SongDB = {
         } else
             if (reject) reject();
     },
-    delete: function (resolve, reject)
+    delete(resolve, reject)
     {
         this.deleting = true;
-        var req = indexedDB.deleteDatabase(dbName);
-        req.onsuccess = function ()
+        const req = indexedDB.deleteDatabase(dbName);
+        req.onsuccess = () =>
         {
             console.info("Deleted database successfully");
             if (resolve) resolve();
         };
-        req.onerror = function (event)
+        req.onerror = ({ target }) =>
         {
             console.error("Couldn't delete database");
-            if (reject) reject(event.target.error);
+            if (reject) reject(target.error);
         };
-        req.onblocked = function (event)
+        req.onblocked = event =>
         {
             console.error("Couldn't delete database due to the operation being blocked");
             if (reject) reject("blocked")

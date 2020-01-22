@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade light" data-backdrop="static" tabindex="-1" role="dialog" aria-hidden="true">
+  <div :class="['modal fade',dark?'dark':'light']" data-backdrop="static" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -23,6 +23,7 @@
 
 <script>
 import { UIHelpers } from "../js/Helpers";
+import Settings from '../js/Settings';
 export default {
 	data() {
 		return {
@@ -31,8 +32,15 @@ export default {
 			footerData: this.footer,
 			typeData: this.type,
 			okBtnHtml: this.ok,
-			cancelBtnHtml: this.cancel
+			cancelBtnHtml: this.cancel,
+			preferences: this.$parent.preferences
 		};
+	},
+	computed:{
+		dark()
+		{
+			return this.preferences.Theme == 'dark';
+		}
 	},
 	props: {
 		header: String,
@@ -67,6 +75,7 @@ export default {
 		},
 		show() {
 			this.$modal = $(this.$el).modal();
+			//this.dark = Settings.Theme == 'dark';
 			if (typeof this.typeData == "string") {
 				this.okBtnHtml = this.typeData; //For creating dialogs with custom button texts
 				this.typeData = UIHelpers.DialogType.Ok;

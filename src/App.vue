@@ -1,6 +1,6 @@
 <template>
 
-  <body id="app" :class="[darkTheme?'body-black':'body-white',optimizations?'optimizations':'']">
+  <body id="app" :class="[darkTheme?'body-black':'body-white',preferences.Optimizations?'optimizations':'']">
     <header :class="['navbar navbar-expand-xl',darkTheme?'navbar-dark':'navbar-light',fixedNavbar?'fixed-top':'']">
       <a class="navbar-brand" id="title" href="#">{{headerTitle}}</a>
       <button class="navbar-toggler hidden-md-up" type="button" data-toggle="collapse" data-target="#mainNavCollapse" aria-controls="mainNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,7 +20,7 @@
             <i class="material-icons" aria-hidden="true">search</i>
             <span class="sr-only">Hledat</span>
           </button>
-          <span @click="settingsDialogShow=true" class="mt-2 mt-lg-0 btn btn-outline-dark" data-toggle="modal" data-target="#settingsWidnow">
+          <span class="mt-2 mt-lg-0 btn btn-outline-dark" @click="showMainDialog">
             <a data-toggle="tooltip" class="d-block w-100" data-container="#mainButtonNav" data-placement="bottom" title="Nastavení" aria-label="Nastavení">
               <i class="material-icons" aria-hidden="true">settings</i>
               <span class="sr-only">Nastavení</span>
@@ -41,17 +41,9 @@
       <div class="navbar-cover bg-light"></div>
     </header>
     <header :class="'fixed-top bg-light nav-sec '+(darkTheme?'navbar-dark':'navbar-light')" style="z-index:1">
-      <a class="navbar-brand smallnav">{{$store.state.title}}</a>
+      <a class="navbar-brand" id="smallnav">{{$store.state.title}}</a>
     </header>
     <!-- There is space for dialog components -->
-    <div id="dialogArea">
-      <ModalDialog v-for="n in modalsCount" :ref="'dialog'+n" :key="n" />
-    </div>
-    <AcceptTermsDialog v-if="notAcceptedTerms" />
-    <TasksDialog v-if='tasksDialogShow' />
-    <keep-alive>
-      <SettingsDialog v-if="settingsDialogShow" />
-    </keep-alive>
     <div @click='hideNav' ref='mainContent'>
       <transition :name="transitionName" mode="out-in" v-on:enter='applyThemeToChildren' @beforeLeave='setOverflow' @afterEnter='resetOverflow'>
         <keep-alive>
@@ -59,6 +51,13 @@
         </keep-alive>
       </transition>
     </div>
+    <div id="dialogArea">
+      <ModalDialog v-for="n in modalsCount" :ref="'dialog'+n" :key="n" />
+    </div>
+    <AcceptTermsDialog v-if="notAcceptedTerms" />
+    <TasksDialog v-if='tasksDialogShow' />
+    <CustomizationDrawer v-if='custDialogShow' @chordsUpdate='songAppearanceUpdate' />
+    <SettingsDialog v-if="settingsDialogShow" />
   </body>
 </template>
 
@@ -69,13 +68,13 @@ import { UIHelpers, Environment } from "./js/Helpers";
 export default {
 	data: function() {
 		return {
+			preferences: Settings.Preferences,
+			customization: Settings.SongCustomization,
 			pathname: window.location.pathname,
-			optimizations: Settings.Optimizations,
-			darkTheme: Settings.Theme == "dark",
-			fixedNavbar: Settings.FixedNavbar,
 			notAcceptedTerms: false,
 			settingsDialogShow: false,
 			tasksDialogShow: false,
+			custDialogShow: false,
 			navPages: [
 				{
 					href: "/",
@@ -112,16 +111,26 @@ export default {
 	components: {
 		AcceptTermsDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/AcceptTerms"),
 		SettingsDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/Settings"),
+		CustomizationDrawer: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/Customization"),
 		TasksDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/TaskWindow"),
 		ModalDialog: () => import(/* webpackChunkName: "dialogs" */ "./components/Dialog")
 	},
 	computed: {
 		headerTitle() {
-			if (Settings.FixedNavbar) return this.$store.state.title;
+			if (this.preferences.FixedNavbar) return this.$store.state.title;
 			else return process.env.VUE_APP_NAME;
 		},
 		modalsCount() {
 			return this.$store.state.modalsCount;
+		},
+		darkTheme() {
+			return this.preferences.Theme == "dark";
+		},
+		fixedNavbar() {
+			if (this.pathname == "/song")
+				//Always unfix on song page
+				return false;
+			return this.preferences.FixedNavbar;
 		}
 	},
 	mounted: function() {
@@ -131,6 +140,7 @@ export default {
 		Tasks.indicatorElement = this.$refs.tasksBtnIcon;
 		this.$router.beforeEach((to, from, next) => {
 			_class.pathname = to.path;
+			_class.preferences = Settings.Preferences;
 			const toDepth = to.path.split("/").length;
 			const fromDepth = from.path.split("/").length;
 			if (_class.localHistory.length < 2) {
@@ -147,7 +157,7 @@ export default {
 			next();
 		});
 		var navCollapse = (this.navCollapse = $(".navbar-collapse"));
-		if (!Settings.CookiesAccepted) this.notAcceptedTerms = true;
+		if (!this.preferences.CookiesAccepted) this.notAcceptedTerms = true;
 		var nav = $(".navbar");
 		navCollapse.on("show.bs.collapse", function() {
 			navCollapse.addClass("expanded");
@@ -156,7 +166,7 @@ export default {
 		navCollapse.on("hide.bs.collapse", function() {
 			navCollapse.removeClass("expanded");
 		});
-		if (Settings.Theme == "dark") Settings.changeTheme("dark", true);
+		if (this.preferences.Theme == "dark") Settings.changeTheme("dark", true);
 	},
 	methods: {
 		hideNav() {
@@ -170,6 +180,19 @@ export default {
 		},
 		resetOverflow() {
 			this.$refs.mainContent.style.overflow = "visible";
+		},
+		showMainDialog() {
+			if (this.pathname == "/song") {
+				this.$nextTick(()=>$("#customization").navdrawer("show"))
+				this.hideNav();
+			} else {
+				this.settingsDialogShow = true;
+				this.$nextTick(()=>$("#settingsWidnow").modal("show"))
+			}
+		},
+		songAppearanceUpdate(event)
+		{
+			this.$emit('chordsUpdate',event);
 		}
 	}
 };

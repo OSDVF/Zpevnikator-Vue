@@ -1,7 +1,7 @@
 <template>
   <main class="container">
     <div class="float-md-right">
-      <div id="transpositionInfo" class="text-secondary font-weight-bold">{{transpositionInfo}}</div>
+      <div id="transpositionInfo" class="text-secondary font-weight-bold" v-if='transpositionInfo.length'>Transponováno o {{transpositionInfo>0?('+'+transpositionInfo):transpositionInfo}}</div>
     </div>
     <div id="songWrapper" v-html="songHtml" :style="wrapperStyle" :class='wrapperClasses'>
     </div>
@@ -50,6 +50,7 @@ import { NetworkUtils, SongProcessing, UIHelpers, IOUtils } from "../js/Helpers"
 import Settings from "../js/Settings";
 import { SongDB } from "../js/databases/SongDB";
 import PSON from "pson";
+
 SongDB.onmessage = UIHelpers.Message; //Attach message listener
 
 export default {
@@ -58,24 +59,56 @@ export default {
 			songInfo: { url: "chyba" },
 			songHtml: null,
 			lastSongResponse: null,
-			transpositionInfo: null,
-			info: { lastChanged: "Neznámé", downloaded: "Neznámé", adminUrl: "https://dorostmladez.cz/wp-admin/edit.php?post_type=song" },
-			wrapperStyle: {
-				"--lheight": (Settings.ShowChords ? 1 : 0) + parseFloat(Settings.LineHeight),
-				"--lwchheight:": Settings.LineHeight,
-				"--chordSize:": Settings.ChordSize + "rem",
-				"--pMargin": Settings.ParagraphMargin + "rem",
-				"font-size": Settings.TextSize + "rem"
-			},
-			wrapperClasses:false
+			transpositionInfo: "",
+			info: { lastChanged: "Neznámé", downloaded: "Neznámé", adminUrl: "https://dorostmladez.cz/wp-admin/edit.php?post_type=song" }
 		};
 	},
+	computed: {
+		wrapperStyle() {
+			return {
+				"--lheight": (this.customization.ShowChords ? 1 : 0) + parseFloat(this.customization.LineHeight),
+				"--lwchheight:": this.customization.LineHeight,
+				"--chordSize": this.customization.ChordSize + "rem",
+				"--pMargin": this.customization.ParagraphMargin + "rem",
+				"font-size": this.customization.TextSize + "rem"
+			};
+		},
+		customization() {
+			//Will also execute on every modify so..
+			if(this.lastSongResponse)//If we are on an already displayed song
+			{
+				this.songHtml = this.$parent.customization.HighlightAnchors?SongProcessing.makeRightSequencesBold(this.lastSongResponse):this.lastSongResponse;
+				this.$nextTick(()=>{
+					this.optionalChords(this.$parent.customization.ShowOptionalChords);
+			this.bassChords(this.$parent.customization.ShowBassChords);
+				})
+			}
+			return this.$parent.customization;
+		},
+		wrapperClasses() {
+			return [this.customization.ShowChords ? "" : "no-chords", this.customization.ChordStyle == "inside" ? "inside" : ""];
+		}
+	},
 	mounted() {
+		this.$parent.custDialogShow = true;
 		this.changeDisplayedSong(this.$route.query.id);
+		this.$parent.$on("chordsUpdate", val => {
+			if (val == "alt") {
+				this.songInfo.alterationChange=!this.songInfo.alterationChange;
+				this.alterAll();
+			} else if (val) {
+				this.applyTransposition(val);
+				if(this.songHtml.alterationChange)
+					this.alterAll();
+				this.songInfo.transposition = val;
+			}
+			SongDB.updateSong(null,this.songInfo)
+		});
 	},
 	activated() {
+		this.$parent.nextDialogName = "customization";
 		this.songHtml = loadingBar;
-		if (Settings.WakeLock) {
+		if (Settings.Preferences.WakeLock) {
 			$(() => {
 				if (UIHelpers.initializeNoSleep())
 					UIHelpers.noSleep
@@ -93,6 +126,7 @@ export default {
 		}
 	},
 	deactivated() {
+		this.$parent.nextDialogName = "settings";
 		if (UIHelpers.noSleep) {
 			UIHelpers.noSleep.disable();
 			UIHelpers.noSleep.enabled = false;
@@ -120,7 +154,6 @@ export default {
 			}
 		},
 		changeDisplayedSong(url, forceFetch) {
-			this.songInfo.url = url;
 			const _class = this;
 
 			function getInfoFromDB() {
@@ -130,7 +163,7 @@ export default {
 						SongDB.downloadIndex(displaySongInfoFromParams);
 						return;
 					}
-					_class.songInfo = inf;
+					_class.songInfo = {..._class.songInfo,...inf};
 					_class.$store.commit("changeTitle", inf.name);
 					if (inf.status) {
 						$("#specialState i").replaceWith(SongProcessing.statusToIcon(inf.status));
@@ -152,7 +185,7 @@ export default {
 					response.text().then(html => {
 						_class.songHtml = Settings.HighlightAnchors ? SongProcessing.makeRightSequencesBold(html) : html;
 						_class.lastSongResponse = html;
-						this.$nextTick(this.applyCustomization)
+						this.$nextTick(this.applyCustomization);
 					}); //Very nice one-liner 🙃
 
 					this.info.lastChanged = new Date(response.headers.get("Last-Modified")).toLocaleDateString("cs-CZ", opt);
@@ -249,8 +282,7 @@ export default {
 			this.$route.push({ name: "edit", query: this.songInfo.url });
 		},
 		transposeChord(chord, amount) {
-			if(!amount)
-				return chord;
+			if (!amount) return chord;
 			const scale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"];
 			var matchedh = [];
 			var normal = chord.replace(/([CDEFGAH](?![#b]))/g, function(match) {
@@ -350,16 +382,13 @@ export default {
 				);
 			});
 			this.applyChordSpacing();
-			if (!amount) {
-				$("#transpositionInfo").html("");
-			} else {
-				$("#transpositionInfo").html("Transponováno o " + amount.toString() + (amount < 0 ? " dolů" : " nahoru"));
-			}
+			this.transpositionInfo = amount ? amount : "";
 		},
 		alterAll() {
+			const _self = this;
 			$(".chord").each(function() {
 				const elem = this;
-				elem.innerHTML = changeAlteration(elem.innerHTML);
+				elem.innerHTML = _self.changeAlteration(elem.innerHTML);
 			});
 		},
 		optionalChords(show) {
@@ -383,32 +412,29 @@ export default {
 			}
 		},
 		applyCustomization() {
-			this.wrapperStyle = {
+			/*this.wrapperStyle = {
 				"--lheight": (Settings.ShowChords ? 1 : 0) + parseFloat(Settings.LineHeight),
 				"--lwchheight:": Settings.LineHeight,
 				"--chordSize:": Settings.ChordSize + "rem",
 				"--pMargin": Settings.ParagraphMargin + "rem",
 				"font-size": Settings.TextSize + "rem"
-			}
-			$("body").css("--mainMargin", "-" + Settings.PageMargins + "px");
-			this.wrapperClasses = '';
-			if (Settings.ShowChords) {
-				if (Settings.ChordStyle == "inside")
-					//Hovorka style
-					this.wrapperClasses += "inside";
+			};*/
+			$("body").css("--mainMargin", "-" + this.customization.PageMargins + "px");
+			//this.wrapperClasses = "";
+			if (this.customization.ShowChords) {
+				if(this.songInfo.transposition)this.applyTransposition(this.songInfo.transposition);
 				if (this.songInfo.alterationChange == true) {
 					this.alterAll();
 				}
-				if (Settings.ShowOptionalChords == false) {
+				if (this.customization.ShowOptionalChords == false) {
 					this.optionalChords(false);
 				}
-				if (Settings.ShowBassChords == false) {
+				if (this.customization.ShowBassChords == false) {
 					this.bassChords(false);
 				}
-				this.applyTransposition(this.songInfo.transposition);
-			} else {
+			} /* else {
 				this.wrapperClasses += "no-chords";
-			}
+			}*/
 			/*$("#text-size").val(Settings.TextSize);
 			$("#chord-size").val(Settings.ChordSize);
 			$("#line-height").val(Settings.LineHeight);

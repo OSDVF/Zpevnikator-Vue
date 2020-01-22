@@ -40,7 +40,7 @@
             <i class="material-icons rotating d-none" id="songProgressCircle">autorenew</i>
           </span>
           <br style="clear:both" />
-          <span id="songStatus" class="text-warning"></span>
+          <span class="text-warning" >{{songDownloadStatus}}</span>
         </div>
       </div>
     </div>
@@ -161,7 +161,7 @@
 
 <script>
 import { Environment, UIHelpers, SongProcessing, WorkerStates } from "../js/Helpers";
-import { SongDB } from '../js/databases/SongDB';
+import { SongDB } from "../js/databases/SongDB";
 export default {
 	data() {
 		return {
@@ -169,7 +169,8 @@ export default {
 			browserVersion: "Neznámá",
 			browserDetected: false,
 			verdictClass: "text-primary",
-			allSongsDown:true
+			allSongsDown: true,
+			songDownloadStatus
 		};
 	},
 	created() {
@@ -188,14 +189,13 @@ export default {
 		var rawSafari = navigator.userAgent.match(/Version\/(\d+).*Safari/);
 		var safariVersion = rawSafari ? parseInt(rawSafari[1], 10) : 0;
 		if (chromeVersion) {
-      this.browserVersion = chromeVersion;
-      this.browserDetected = true;
-    }
-		else if (safariVersion) {
+			this.browserVersion = chromeVersion;
+			this.browserDetected = true;
+		} else if (safariVersion) {
 			this.browserVersion = safariVersion;
 			this.detectionResult = "Aplikace není pro iOS a MacOS optimalizována. Ale měla by fungovat od <b>Safari 11</b>.<br>Na jiných prohlížečích na těchto systémech <b>nefunguje</b>";
-      this.verdictClass = "text-warning";
-      this.browserDetected = true;
+			this.verdictClass = "text-warning";
+			this.browserDetected = true;
 		}
 		if (Environment.isMobile.Android()) {
 			$(".manualInstallation").addClass("show");
@@ -229,8 +229,8 @@ export default {
 			this.detectionResult = "Minimálně když zobrazíte v prohlížeči stránku chvaly.dorostmladez.cz, měla by být dostupná offline. Jestli vam půjde nainstalovat aplikaci je neznáme...";
 		} else {
 			this.detectionResult = "Vám to spíš nebude vůbec fungovat.";
-      this.verdictClass = "text-danger";
-      this.browserDetected = false;
+			this.verdictClass = "text-danger";
+			this.browserDetected = false;
 		}
 	},
 	methods: {
@@ -401,13 +401,37 @@ export default {
 				}
 			}
 		},
-		updateIndex()
-		{
+		updateIndex() {
 			SongDB.downloadIndex();
 		},
-		dlg()
-		{
-			UIHelpers.Dialog('Ahoj')
+		checkDownloadedSongs(onlyInfo) {
+			return caches
+				.open(process.env.VUE_APP_SONG_DB_NAME)
+				.then(function(cache) {
+					return cache.keys().then(function(keys) {
+						return SongDB.read(function(songStore) {
+							if (songStore.keyPath == "url") {
+								var countRequest = songStore.count();
+								countRequest.onsuccess = function() {
+									var diff = Infinity;
+									if (localStorage.lastIndexDownloaded) diff = Math.floor(Date.now() / 1000) - localStorage.lastIndexDownloaded;
+
+									if (countRequest.result !== 0 && keys.length >= countRequest.result) this.allSongsDown = true;
+									else if (!onlyInfo && navigator.onLine && diff > 86400) {
+										this.updateIndex(()=>this.checkDownloadedSongs(true));
+									}
+									this.songDownloadStatus = "Staženo " + keys.length + "/" + countRequest.result + " písní";
+								};
+							} else if (SongDB.requestingDB) {
+								this.updateIndex(this.checkDownloadedSongs);
+							} //message("Fatální chyba při práci s databází. Vymažte prosím všechna data aplikace","danger",7000,true);
+							else throw "deleteDB";
+						});
+					});
+				})
+				.catch(function(o) {
+					if (o == "deleteDB") SongDB.delete(location.reload, location.reload); //Finally a way how to delete indexedDB
+				});
 		}
 	},
 	activated() {

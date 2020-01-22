@@ -21,7 +21,7 @@
             <div class="mb-3 d-flex justify-content-between">
               Zobrazit akordy
               <div class="custom-control custom-switch ml-3">
-                <input class="custom-control-input" id="showChords" type="checkbox" :checked='Settings.ShowChords' />
+                <input class="custom-control-input" id="showChords" type="checkbox" :checked='customization.ShowChords' />
                 <span class="custom-control-track"></span>
                 <label class="custom-control-label" for="showChords"></label>
               </div>
@@ -29,7 +29,7 @@
             <div class="mb-3 d-flex justify-content-between">
               Plovoucí horní lišta všude
               <div class="custom-control custom-switch ml-3">
-                <input class="custom-control-input" id="fixedNavbar" type="checkbox" :checked="Settings.FixedNavbar" />
+                <input class="custom-control-input" id="fixedNavbar" type="checkbox" :checked="preferences.FixedNavbar" />
                 <span class="custom-control-track"></span>
                 <label class="custom-control-label" for="fixedNavbar"></label>
               </div>
@@ -46,7 +46,7 @@
             <div class="mb-3 d-flex justify-content-between">
               Zabránit vypnutí displeje na stránkách písní
               <div class="custom-control custom-switch ml-3">
-                <input class="custom-control-input" id="wakeLock" type="checkbox" :checked="Settings.WakeLock" @change="wakelockNotif" />
+                <input class="custom-control-input" id="wakeLock" type="checkbox" :checked="preferences.WakeLock" @change="wakelockNotif" />
                 <span class="custom-control-track"></span>
                 <label class="custom-control-label" for="wakeLock"></label>
               </div>
@@ -59,7 +59,7 @@
                 </sup>
               </span>
               <div class="custom-control custom-switch ml-3">
-                <input class="custom-control-input" id="optimizations" type="checkbox" :checked="Settings.Optimizations" />
+                <input class="custom-control-input" id="optimizations" type="checkbox" :checked="preferences.Optimizations" />
                 <span class="custom-control-track"></span>
                 <label class="custom-control-label" for="optimizations"></label>
               </div>
@@ -68,7 +68,7 @@
             <div class="mb-3 d-flex justify-content-between">
               Zobrazovat možnost načíst online verzi stránky
               <div class="custom-control custom-switch ml-3">
-                <input class="custom-control-input" id="showReloadPrompt" type="checkbox" :checked="Settings.ShowReloadPrompt" />
+                <input class="custom-control-input" id="showReloadPrompt" type="checkbox" :checked="preferences.ShowReloadPrompt" />
                 <span class="custom-control-track"></span>
                 <label class="custom-control-label" for="showReloadPrompt"></label>
               </div>
@@ -76,7 +76,7 @@
             <div class="mb-3 d-flex justify-content-between">
               Povolit notifikace
               <div class="custom-control custom-switch ml-3">
-                <input class="custom-control-input" id="notifEnable" type="checkbox" :checked="Settings.EnableNotifications" />
+                <input class="custom-control-input" id="notifEnable" type="checkbox" :checked="preferences.EnableNotifications" />
                 <span class="custom-control-track"></span>
                 <label class="custom-control-label" for="notifEnable"></label>
               </div>
@@ -110,10 +110,17 @@ import globalManager from "../../js/global";
 export default {
 	data() {
 		return {
-			Settings: Settings,
-			dark: Settings.Theme == "dark"
+      preferences: this.$parent.preferences,
+      customization: this.$parent.customization
 		};
-	},
+  },
+  computed:
+  {
+    dark()
+    {
+      return this.preferences.Theme == 'dark'
+    }
+  },
 	mounted() {
 		$(this.$el)
 			.modal("show")
@@ -131,10 +138,12 @@ export default {
 				Settings.applySettings();
 				UIHelpers.Message("Nastavení uloženo", "success", 3000);
 
-				//Update properties
-				this.$parent.optimizations = Settings.Optimizations;
+        //Update properties
+        this.$parent.customization = Settings.SongCustomization;
+        this.$parent.preferences = Settings.Preferences;
+				/*this.$parent.optimizations = Settings.Optimizations;
 				this.$parent.darkTheme = this.dark = Settings.Theme == "dark";
-        this.$parent.fixedNavbar = Settings.FixedNavbar;
+        this.$parent.fixedNavbar = Settings.FixedNavbar;*/
         
         $(this.$el).modal('hide');
 			} catch (e) {

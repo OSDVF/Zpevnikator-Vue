@@ -155,23 +155,22 @@ function precacheEssential(noCache)
         });
     })
 }
+const cdnUrls = [
+    "https://code.jquery.com/jquery-3.4.1.slim.min.js",
+    "https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css",
+    "https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js",
+    "https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js",
+    "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.2.0/js.cookie.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/css/bootstrap-select.min.css",
+    "https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"
+];
 function precache(noCache)
 {
     extendedPrecaching = true;
     return caches.open(cacheName).then(function (cache)
     {
-        const cdnUrls = [
-            "https://code.jquery.com/jquery-3.4.1.slim.min.js",
-            "https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css",
-            "https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js",
-            "https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js",
-            "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.2.0/js.cookie.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/css/bootstrap-select.min.css",
-            "https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"
-        ];
-
         var message = {};
         message.actualState = WorkerStates.downloadingExternal;
         message.messageType = "caching_state_changed";
@@ -245,7 +244,7 @@ self.addEventListener('install', e =>
         }).then(() =>
         {
             if (!precaching && !precachedEssential)
-                precacheEssential().then(()=>self.clients.claim());//Pro jistotu
+                precacheEssential().then(() => self.clients.claim());//Pro jistotu
         })
     }));
 });
@@ -598,3 +597,61 @@ if (precaching)
     afterprecaching.push(fetch_it);
 else
     self.addEventListener("fetch", fetch_it);
+
+function checkEssential()
+{
+    return caches.open(essentialCache).then(function (cache)
+    {
+        return cache.keys().then(function (keys)
+        {
+            if (keys.length >= __precacheManifest.length)
+                return Promise.resolve(true);
+            return Promise.reject(false);
+        });
+    })
+}
+function checkExtended()
+{
+    return caches.open(extendedCacheName).then(function (cache)
+    {
+        return cache.keys().then(function (keys)
+        {
+            if (keys.length >= cdnUrls.length)
+                return Promise.resolve(true);
+            return Promise.reject(false);
+        });
+    })
+}
+self.addEventListener('activate', function ()
+{
+    postMessageToClient({ actualState: WorkerStates.ready, messageType: "caching_state_changed" });
+    function checkState(noDownload, downApp)
+    {
+        checkEssential().then(function ()
+        {
+            postMessageToClient({ actualState: WorkerStates.downloadedLocal, messageType: "caching_state_changed" });
+            checkExtended().then(function ()
+            {
+                postMessageToClient({ actualState: WorkerStates.downloadedExternal, messageType: "caching_state_changed" });
+                /*appDownloadButtonEnable();
+                if (insidePwa)
+                {
+                    indicateProgresAlreadyCompleted("#installation");
+                    $("#offlineEnable").hide();
+                }
+                else if (downApp == true)
+                    dialog("Všechny potřebné soubory byly již staženy. Chcete nyní stáhnout aplikaci?", null, DialogType.YesNo, "Instalovat?", null, appDownload);*/
+            })
+        }).catch(function ()
+        {
+            if (noDownload)
+                return;
+            if (navigator.onLine)
+                registerSync("essential-download");
+            else
+                showSnackbar("<div class=\"snackbar-body\">Až se připojíte online, bude možné stáhnout soubory.</div><button class=\"btn btn-outline-secondary btn-fluid p-2 pr-3\" type=\"button\" onclick=\"checkState()\">Zkusit znovu</button>", null, null, true);
+        })
+
+    }
+    checkState();
+})

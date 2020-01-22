@@ -204,8 +204,6 @@ main
 	--offsetTop:75px;
 	overflow:visible;
 	padding-top:var(--offsetTop);
-	padding-left:calc(var(--mainMargin) * -1);
-	padding-right:calc(var(--mainMargin) * -1);
 	transition: all .3s cubic-bezier(.55,0,.1,1);
 }
 .headerLess main.container
@@ -432,12 +430,16 @@ body .dropdown-menu::before
 	width: -webkit-fill-available;
 	width: fill-available;
 	width:fill;
-	margin: 0 var(--mainMargin);
 }
 main .fw
 {
 	margin-left: var(--mainMargin);
 	margin-right: var(--mainMargin);
+}
+main.container
+{
+	padding-left:calc(var(--mainMargin) * -1);
+	padding-right:calc(var(--mainMargin) * -1);
 }
 main .pw
 {

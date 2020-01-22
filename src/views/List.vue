@@ -6,7 +6,7 @@
         Rozumím
       </button>
     </div>
-    <span class="d-flex justify-content-between">
+    <span class="d-flex justify-content-between mx-2">
       <span class="clearable w-100">
         <input class="form-control" id="searchAboveTable" type="text" @keydown="searchTable()" placeholder="Vyhledat" aria-label="Vyhledat p\u00EDse\u0148">
         <i class="clearable__clear" @click="clearSearch">&times;</i>
@@ -25,6 +25,7 @@
         </tr>
       </thead>
     </table>
+	<br>
     <div class="fab-right">
       <button class="btn btn-float btn-secondary m-3" type="button" data-placement="left" data-toggle="tooltip" title="Aktualizovat seznam" @click="refreshListClicked">
         <i class="material-icons">refresh</i>
@@ -45,7 +46,7 @@ export default {
 		var theTable = $("#wpsongbook_list");
 		_class.tab = theTable.DataTable({
 			stateSave: true,
-			paging: Settings.TablePaging,
+			paging: this.$parent.preferences.TablePaging,
 			search: {
 				caseInsensitive: true
 			},
