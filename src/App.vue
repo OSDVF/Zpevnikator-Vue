@@ -183,16 +183,16 @@ export default {
 		},
 		showMainDialog() {
 			if (this.pathname == "/song") {
-				this.$nextTick(()=>$("#customization").navdrawer("show"))
+				var wide = window.innerWidth > process.env.VUE_APP_BREAKPOINT_LG;
+				this.$nextTick(() => $("#customization").navdrawer({ type: wide ? "persistent" : "temporary"}));
 				this.hideNav();
 			} else {
 				this.settingsDialogShow = true;
-				this.$nextTick(()=>$("#settingsWidnow").modal("show"))
+				this.$nextTick(() => $("#settingsWidnow").modal("show"));
 			}
 		},
-		songAppearanceUpdate(event)
-		{
-			this.$emit('chordsUpdate',event);
+		songAppearanceUpdate(event) {
+			this.$emit("chordsUpdate", event);
 		}
 	}
 };

@@ -1,7 +1,7 @@
 <template>
   <main class="container">
     <div class="float-md-right">
-      <div id="transpositionInfo" class="text-secondary font-weight-bold" v-if='transpositionInfo.length'>Transponováno o {{transpositionInfo>0?('+'+transpositionInfo):transpositionInfo}}</div>
+      <div id="transpositionInfo" class="text-secondary font-weight-bold mr-lg-5" v-if='transpositionInfo.length'>Transponováno o {{transpositionInfo>0?('+'+transpositionInfo):transpositionInfo}}</div>
     </div>
     <div id="songWrapper" v-html="songHtml" :style="wrapperStyle" :class='wrapperClasses'>
     </div>
@@ -75,13 +75,13 @@ export default {
 		},
 		customization() {
 			//Will also execute on every modify so..
-			if(this.lastSongResponse)//If we are on an already displayed song
-			{
-				this.songHtml = this.$parent.customization.HighlightAnchors?SongProcessing.makeRightSequencesBold(this.lastSongResponse):this.lastSongResponse;
-				this.$nextTick(()=>{
+			if (this.lastSongResponse) {
+				//If we are on an already displayed song
+				this.songHtml = this.$parent.customization.HighlightAnchors ? SongProcessing.makeRightSequencesBold(this.lastSongResponse) : this.lastSongResponse;
+				this.$nextTick(() => {
 					this.optionalChords(this.$parent.customization.ShowOptionalChords);
-			this.bassChords(this.$parent.customization.ShowBassChords);
-				})
+					this.bassChords(this.$parent.customization.ShowBassChords);
+				});
 			}
 			return this.$parent.customization;
 		},
@@ -94,22 +94,24 @@ export default {
 		this.changeDisplayedSong(this.$route.query.id);
 		this.$parent.$on("chordsUpdate", val => {
 			if (val == "alt") {
-				this.songInfo.alterationChange=!this.songInfo.alterationChange;
+				this.songInfo.alterationChange = !this.songInfo.alterationChange;
 				this.alterAll();
 			} else if (val) {
 				this.applyTransposition(val);
-				if(this.songHtml.alterationChange)
-					this.alterAll();
+				if (this.songHtml.alterationChange) this.alterAll();
 				this.songInfo.transposition = val;
 			}
-			SongDB.updateSong(null,this.songInfo)
+			SongDB.updateSong(null, this.songInfo);
 		});
 	},
 	activated() {
+		//Customization drawer handling
 		this.$parent.nextDialogName = "customization";
+
 		this.songHtml = loadingBar;
 		if (Settings.Preferences.WakeLock) {
 			$(() => {
+				if (window.innerWidth > process.env.VUE_APP_BREAKPOINT_LG) this.$parent.showMainDialog();
 				if (UIHelpers.initializeNoSleep())
 					UIHelpers.noSleep
 						.enable()
@@ -126,7 +128,10 @@ export default {
 		}
 	},
 	deactivated() {
+		//Reverting dialog settings
 		this.$parent.nextDialogName = "settings";
+		$("#customization").navdrawer("hide");
+
 		if (UIHelpers.noSleep) {
 			UIHelpers.noSleep.disable();
 			UIHelpers.noSleep.enabled = false;
@@ -163,7 +168,7 @@ export default {
 						SongDB.downloadIndex(displaySongInfoFromParams);
 						return;
 					}
-					_class.songInfo = {..._class.songInfo,...inf};
+					_class.songInfo = { ..._class.songInfo, ...inf };
 					_class.$store.commit("changeTitle", inf.name);
 					if (inf.status) {
 						$("#specialState i").replaceWith(SongProcessing.statusToIcon(inf.status));
@@ -183,7 +188,7 @@ export default {
 			dwnldPromise
 				.then(response => {
 					response.text().then(html => {
-						_class.songHtml = Settings.HighlightAnchors ? SongProcessing.makeRightSequencesBold(html) : html;
+						_class.songHtml = this.customization.HighlightAnchors ? SongProcessing.makeRightSequencesBold(html) : html;
 						_class.lastSongResponse = html;
 						this.$nextTick(this.applyCustomization);
 					}); //Very nice one-liner 🙃
@@ -422,7 +427,7 @@ export default {
 			$("body").css("--mainMargin", "-" + this.customization.PageMargins + "px");
 			//this.wrapperClasses = "";
 			if (this.customization.ShowChords) {
-				if(this.songInfo.transposition)this.applyTransposition(this.songInfo.transposition);
+				if (this.songInfo.transposition) this.applyTransposition(this.songInfo.transposition);
 				if (this.songInfo.alterationChange == true) {
 					this.alterAll();
 				}

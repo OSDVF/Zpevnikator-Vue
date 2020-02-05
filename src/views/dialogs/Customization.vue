@@ -1,5 +1,5 @@
 <template>
-  <div aria-hidden="true" class="navdrawer navdrawer-right navdrawer-temporary navdrawer-persistent-lg mt-xl-1" id="customization" tabindex="-1">
+  <div aria-hidden="true" class="navdrawer navdrawer-right navdrawer-temporary-sm navdrawer-persistent-lg mt-xl-1" id="customization" tabindex="-1">
     <div class="navdrawer-content bg-light text-dark">
       <div class="navdrawer-header bg-light text-dark invisible-lg">
         <a class="navbar-brand px-0" href="#">Přizpůsobit</a>
@@ -92,25 +92,25 @@ export default {
 			noteEditBtnIcon: "assignment",
 			alter: false,
 			customization: {
-                TextSize:Settings._songCustomization.TextSize,
-                ChordSize:Settings._songCustomization.ChordSize,
-                ChordStyle:Settings._songCustomization.ChordStyle,
-                ShowOptionalChords:Settings._songCustomization.ShowOptionalChords,
-                ShowBassChords:Settings._songCustomization.ShowBassChords,
-                PageMargins:Settings._songCustomization.PageMargins,
-                ParagraphMargin:Settings._songCustomization.ParagraphMargin,
-                HighlightAnchors:Settings._songCustomization.HighlightAnchors,
-                LineHeight:Settings._songCustomization.LineHeight,
-            },
-            transpValue:0
+				TextSize: Settings._songCustomization.TextSize,
+				ChordSize: Settings._songCustomization.ChordSize,
+				ChordStyle: Settings._songCustomization.ChordStyle,
+				ShowOptionalChords: Settings._songCustomization.ShowOptionalChords,
+				ShowBassChords: Settings._songCustomization.ShowBassChords,
+				PageMargins: Settings._songCustomization.PageMargins,
+				ParagraphMargin: Settings._songCustomization.ParagraphMargin,
+				HighlightAnchors: Settings._songCustomization.HighlightAnchors,
+				LineHeight: Settings._songCustomization.LineHeight
+			},
+			transpValue: 0
 		};
 	},
 	watch: {
 		customization: {
 			deep: true,
 			handler() {
-                this.$parent.customization = new Settings.Customization(this.customization);
-                $("body").css("--mainMargin", "-" + this.customization.PageMargins + "px");
+				this.$parent.customization = new Settings.Customization(this.customization);
+				$("body").css("--mainMargin", "-" + this.customization.PageMargins + "px");
 			}
 		}
 	},
@@ -151,3 +151,13 @@ export default {
 	}
 };
 </script>
+
+<style>
+#songWrapper p {
+	border-bottom: 2px dashed #86868668;
+	margin-bottom: var(--pMargin);
+}
+#songWrapper.no-chords p {
+	padding-bottom: 0.3rem;
+}
+</style>
