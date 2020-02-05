@@ -1,0 +1,25 @@
+name: Integration
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '10.x'
+    - name: Download
+      run: npm install
+    - name: Build
+      run: npm run Build-Modern
+    - name: FTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@2.0.0
+      env:
+        FTP_SERVER: 126701.wedos.net
+        FTP_USERNAME: w126701_dev
+        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        ARGS: --delete
