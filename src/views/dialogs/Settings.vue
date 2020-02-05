@@ -90,9 +90,9 @@
             <i class="material-icons">refresh</i>&ensp;Aktualizovat aplikaci
           </a>
           <br />
-          <a href="/about">
+          <router-link to="/about">
             <i class="material-icons">info</i> O aplikaci
-          </a>
+          </router-link>
         </div>
         <div class="modal-footer">
           <div id="settingsResponse"></div>
