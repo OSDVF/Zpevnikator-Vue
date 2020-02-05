@@ -19,7 +19,8 @@ jobs:
     - name: FTP Deploy
       uses: SamKirkland/FTP-Deploy-Action@2.0.0
       env:
-        FTP_SERVER: 126701.wedos.net
+        FTP_SERVER: 126701.w1.wedos.net
         FTP_USERNAME: w126701_dev
         FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        LOCAL_DIR: dist
         ARGS: --delete
