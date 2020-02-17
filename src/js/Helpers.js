@@ -32,32 +32,23 @@ const NetworkUtils = {
 	 */
 	CacheOrNetwork(uri, cacheName)//Faster than relying on service worker
 	{
-		return new Promise(function (res, rej)
-		{
-			if (cacheName)
-				caches.open(cacheName).then((c) =>
-				{
-					c.match(uri).then((response) =>
-					{
-						if (response)
-							res(response).catch(rej);
-						else
-							fetch(uri).then(res).catch(rej);
-					});
-				})
-			else caches.match(uri).then((response) =>
+		if (cacheName)
+			return caches.open(cacheName).then((c) =>
 			{
-				if (response)
-					res(response);
-				else
-					fetch(uri).then(function (response)
-					{
-						if (response.ok)
-							res(response)
-						else
-							rej(response)
-					});
-			}).catch(rej)
+				return c.match(uri).then((response) =>
+				{
+					if (response)
+						return response;
+					else
+						return fetch(uri);
+				});
+			})
+		else return caches.match(uri).then((response) =>
+		{
+			if (response)
+				return response;
+			else
+				return fetch(uri);
 		})
 	}
 }
@@ -264,7 +255,7 @@ const NoSleepHelper = {
 }
 
 const UIHelpers = {
-	store:null,
+	store: null,
 	dialogResult: null,
 	DialogType: Object.freeze({
 		"Ok": 1,
@@ -287,9 +278,9 @@ const UIHelpers = {
 	Dialog(text, callback, type = UIHelpers.DialogType.Ok, header, footer, positiveEventListener)
 	{
 		UIHelpers.store.commit('addDialog');
-		if(!callback)callback = new Function();
-		if(!positiveEventListener)positiveEventListener = new Function();
-		const newDialog = UIHelpers.appReferences['dialog'+(UIHelpers.store.state.modalsCount-1)][0];//Because Vuex's reaction to commit is too sloow sometimes
+		if (!callback) callback = new Function();
+		if (!positiveEventListener) positiveEventListener = new Function();
+		const newDialog = UIHelpers.appReferences['dialog' + (UIHelpers.store.state.modalsCount - 1)][0];//Because Vuex's reaction to commit is too sloow sometimes
 		newDialog.setData(text, callback, type, header, footer, positiveEventListener);
 		newDialog.show();
 	},
@@ -297,9 +288,9 @@ const UIHelpers = {
 	placeSnackbar($snackbar, text, type, timeout, multiline)
 	{
 		"use strict";
-		$snackbar.addClass(()=>
+		$snackbar.addClass(() =>
 		{
-			setTimeout(()=>
+			setTimeout(() =>
 			{
 				$snackbar.removeClass('showing')
 			}, parseFloat($snackbar.css("transition-duration")) * 1000)
@@ -320,10 +311,10 @@ const UIHelpers = {
 					$snackbar.removeClass("snackbar-multi-line");
 				//children.html(text);
 			}
-			setTimeout(()=>
+			setTimeout(() =>
 			{
 				$snackbar.removeClass('show')
-				setTimeout(()=>
+				setTimeout(() =>
 				{
 					if (UIHelpers.pendingMessages.length > 0) UIHelpers.pendingMessages.pop()();
 				}, 300)
@@ -339,16 +330,16 @@ const UIHelpers = {
 		{
 			if ($snackbar.hasClass('showing'))
 			{
-				$snackbar.one('webkitTransitionEnd transitionEnd',()=>
+				$snackbar.one('webkitTransitionEnd transitionEnd', () =>
 				{
-					$snackbar.one('webkitTransitionEnd transitionEnd',()=>
+					$snackbar.one('webkitTransitionEnd transitionEnd', () =>
 					{
 						UIHelpers.placeSnackbar($snackbar, text, type, timeout, multiline)
 					});
 				});
 			} else
 			{
-				$snackbar.one('webkitTransitionEnd transitionEnd', ()=>
+				$snackbar.one('webkitTransitionEnd transitionEnd', () =>
 				{
 					UIHelpers.placeSnackbar($snackbar, text, type, timeout, multiline)
 				});
@@ -369,12 +360,12 @@ const UIHelpers = {
 		{
 			$('body').append('<div class="snackbar" id="mainSnackbar"></div>');
 		}
-		UIHelpers.pendingMessages.push(()=>
+		UIHelpers.pendingMessages.push(() =>
 		{
 			UIHelpers.fillSnackbar(text, type, timeout, multiline)
 		});
 		if (!$('#mainSnackbar').hasClass('show'))
-		UIHelpers.pendingMessages.pop()();
+			UIHelpers.pendingMessages.pop()();
 	},
 	/**
 	 *  @description Shows message in message area
@@ -388,25 +379,25 @@ const UIHelpers = {
 		UIHelpers.queueSnackbar('<div class="snackbar-body">' + alert + '</div>', type, timeout, multiline);
 	},
 	noSleep: null,
-    initializeNoSleep: function ()
-    {
-        if (UIHelpers.noSleep == undefined)
-        {
-            try
-            {
+	initializeNoSleep: function ()
+	{
+		if (UIHelpers.noSleep == undefined)
+		{
+			try
+			{
 				UIHelpers.noSleep = new NoSleep();
 				return true;
-            }
-            catch (e)
-            {
-                if (e instanceof ReferenceError)
-                {
-                    UIHelpers.Message('Nepodařilo se načíst součást pro zabránění vypínaní displeje. Možná není úplně stažena.', "danger", 3000, true)
+			}
+			catch (e)
+			{
+				if (e instanceof ReferenceError)
+				{
+					UIHelpers.Message('Nepodařilo se načíst součást pro zabránění vypínaní displeje. Možná není úplně stažena.', "danger", 3000, true)
 				}
 				return false;
-            }
-        }
-    }
+			}
+		}
+	}
 }
 
 const Environment = {

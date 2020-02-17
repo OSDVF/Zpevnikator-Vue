@@ -5,6 +5,7 @@
     </div>
     <div id="songWrapper" v-html="songHtml" :style="wrapperStyle" :class='wrapperClasses'>
     </div>
+    <ConnectionErrorDialog v-if='connectionError' @reload-request='reload' />
     <div :class="['pb-2 flex-row-reverse',lastSongResponse==null?'d-none':'d-flex']" style="margin-top:-20px">
       <button data-target="#songInfo" data-toggle="collapse" class="text-muted btn btn-outline-light"><i class="material-icons">info</i></button>
     </div>
@@ -41,9 +42,9 @@
 </template>
 <script>
 const failText =
-	'<p><i class="material-icons">flight_land</i><i class="material-icons">gavel</i><i class="material-icons">highlight_off</i><i class="material-icons">link_off</i><i class="material-icons">cloud_off</i><br><br>Tato píseň nebyla nalezena</p>';
+	'<p><i class="material-icons">flight_land</i><i class="material-icons">gavel</i><i class="material-icons">highlight_off</i><i class="material-icons">link_off</i><i class="material-icons">cloud_done</i><br><br>Tato píseň nebyla nalezena<br></p>';
 const offlineFailText =
-	'<p><i class="material-icons">explore_off</i><i class="material-icons">language</i><i class="material-icons">not_interested</i><br><br>Tato píseň byla pravděpodobně uložena offline na vašem zařízení ale nyní nebyla nalezena</p>';
+	'<p><i class="material-icons">explore_off</i><i class="material-icons">language</i><i class="material-icons">not_interested</i><br><br>Tato píseň byla pravděpodobně uložena offline na vašem zařízení ale nyní nebyla nalezena<br></p>';
 const opt = { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" };
 const loadingBar = '<div class="progress"><div class="progress-bar progress-bar-indeterminate" role="progressbar"></div></div>';
 import { NetworkUtils, SongProcessing, UIHelpers, IOUtils } from "../js/Helpers";
@@ -60,8 +61,12 @@ export default {
 			songHtml: null,
 			lastSongResponse: null,
 			transpositionInfo: "",
-			info: { lastChanged: "Neznámé", downloaded: "Neznámé", adminUrl: "https://dorostmladez.cz/wp-admin/edit.php?post_type=song" }
+			info: { lastChanged: "Neznámé", downloaded: "Neznámé", adminUrl: "https://dorostmladez.cz/wp-admin/edit.php?post_type=song" },
+			connectionError: false
 		};
+	},
+	components: {
+		ConnectionErrorDialog: () => import(/* webpackChunkName: "dialogs" */ "../components/ConnectionError.vue")
 	},
 	computed: {
 		wrapperStyle() {
@@ -98,7 +103,7 @@ export default {
 				this.alterAll();
 			} else if (val) {
 				this.applyTransposition(val);
-				if (this.songHtml.alterationChange) this.alterAll();
+				if (this.songInfo.alterationChange) this.alterAll();
 				this.songInfo.transposition = val;
 			}
 			SongDB.updateSong(null, this.songInfo);
@@ -107,8 +112,6 @@ export default {
 	activated() {
 		//Customization drawer handling
 		this.$parent.nextDialogName = "customization";
-
-		this.songHtml = loadingBar;
 		if (Settings.Preferences.WakeLock) {
 			$(() => {
 				if (window.innerWidth > process.env.VUE_APP_BREAKPOINT_LG) this.$parent.showMainDialog();
@@ -141,11 +144,16 @@ export default {
 		$route(to, from) {
 			if (to.name == "song") {
 				//This page becomes current
-				this.changeDisplayedSong(this.$route.query.id);
+				this.reload();
 			}
 		}
 	},
 	methods: {
+		reload() {
+			this.songHtml = loadingBar;
+			this.connectionError = false;
+			this.changeDisplayedSong(this.$route.query.id);
+		},
 		share() {
 			if (typeof navigator.share != "undefined") navigator.share({ title: this.$store.state.title, url: location.href });
 			else {
@@ -160,51 +168,43 @@ export default {
 		},
 		changeDisplayedSong(url, forceFetch) {
 			const _class = this;
+			SongDB.get(url, async inf => {
+				_class.songInfo = { ..._class.songInfo, ...inf };
+				_class.$store.commit("changeTitle", inf.name);
+				if (inf.status) {
+					$("#specialState i").replaceWith(SongProcessing.statusToIcon(inf.status));
+					$("#specialStateLabel").html(SongProcessing.statusToDescription(inf.status));
+				} else if (inf.offlineOnly) {
+					$("#specialState i").html("cloud_off");
+					$("#specialStateLabel").html("Jen v offline databázi");
+				}
 
-			function getInfoFromDB() {
-				SongDB.get(url, inf => {
-					if (!inf && !url.startsWith("offline:")) {
-						//Může se stát že píseň nějak chybí v indexu, tak ho pro jsitotu stáhneme znova
-						SongDB.downloadIndex(displaySongInfoFromParams);
-						return;
-					}
-					_class.songInfo = { ..._class.songInfo, ...inf };
-					_class.$store.commit("changeTitle", inf.name);
-					if (inf.status) {
-						$("#specialState i").replaceWith(SongProcessing.statusToIcon(inf.status));
-						$("#specialStateLabel").html(SongProcessing.statusToDescription(inf.status));
-					} else if (inf.offlineOnly) {
-						$("#specialState i").html("cloud_off");
-						$("#specialStateLabel").html("Jen v offline databázi");
-					}
-				});
-			}
+				this.info.adminUrl = process.env.VUE_APP_REMOTE_URL + "/api/go.php?cache=false&edit=" + url;
+				const fetchUri = process.env.VUE_APP_REMOTE_URL + "/api/getsong.php?id=" + url + "&nospace=true";
 
-			if (SongDB.updatingIndex) SongDB.afterIndexUpdate(getInfoFromDB);
-			else getInfoFromDB();
-			this.info.adminUrl = process.env.VUE_APP_REMOTE_URL + "/api/go.php?cache=false&edit=" + url;
-			const fetchUri = process.env.VUE_APP_REMOTE_URL + "/api/getsong.php?id=" + url + "&nospace=true";
-			const dwnldPromise = forceFetch ? NetworkUtils.getNoCache(fetchUri) : NetworkUtils.CacheOrNetwork(fetchUri);
-			dwnldPromise
-				.then(response => {
+				try {
+					var response = forceFetch ? await NetworkUtils.getNoCache(fetchUri) : await NetworkUtils.CacheOrNetwork(fetchUri);
 					response.text().then(html => {
 						_class.songHtml = this.customization.HighlightAnchors ? SongProcessing.makeRightSequencesBold(html) : html;
 						_class.lastSongResponse = html;
 						this.$nextTick(this.applyCustomization);
-					}); //Very nice one-liner 🙃
+					});
 
 					this.info.lastChanged = new Date(response.headers.get("Last-Modified")).toLocaleDateString("cs-CZ", opt);
 					//nevím proč, ale Cloudfalre háže datum stažení do hlavičky Expires což je mi teď celkem užitečné :D
 					this.info.downloaded = new Date(response.headers.get("Expires")).toLocaleDateString("cs-CZ", opt);
 					//We use forceFetch only when we are updating current song so we can show this nice message
 					if (forceFetch) UIHelpers.Message("Aktualizována", "success", 1000);
-				})
-				.catch(() => {
-					this.songHtml = url.startsWith("offline:") ? offlineFailText : failText;
-					this.lastSongResponse = null;
-				});
-			//Doesn't really belong here, but we are setting forceFetch only on song update so...
-			if (forceFetch) UIHelpers.Message("Aktualizace písně");
+				} catch (e) {
+					if (e.message == "Failed to fetch") {
+						this.connectionError = true;
+						this.songHtml = null;
+					} else _class.songHtml = url.startsWith("offline:") ? offlineFailText : failText;
+					_class.lastSongResponse = null;
+				}
+				//Doesn't really belong here, but we are setting forceFetch only on song update so...
+				if (forceFetch) UIHelpers.Message("Aktualizace písně");
+			});
 		},
 
 		exportText() {
@@ -304,12 +304,12 @@ export default {
 				matchedh.push(changed);
 				return changed;
 			});
-			var withB = withHash.replace(/[CDEFGAH]b/g, function(match) {
+			var withB = withHash.replace(/[CDEFGAH]b/g, match => {
 				if (matchedh.includes(match)) return match;
-				let altered = changeAlteration(match);
+				let altered = this.changeAlteration(match);
 				let i = (scale.indexOf(altered) + amount) % scale.length;
 				chord;
-				return changeAlteration(scale[i < 0 ? i + scale.length : i]);
+				return this.changeAlteration(scale[i < 0 ? i + scale.length : i]);
 			});
 			return withB;
 		},
@@ -427,7 +427,9 @@ export default {
 			$("body").css("--mainMargin", "-" + this.customization.PageMargins + "px");
 			//this.wrapperClasses = "";
 			if (this.customization.ShowChords) {
-				if (this.songInfo.transposition) this.applyTransposition(this.songInfo.transposition);
+				if (this.songInfo.transposition) {
+					this.applyTransposition(this.songInfo.transposition);
+				} else this.applyChordSpacing(); //We don't do this after transposition, because the applyTransposiiton itself calls applyChordSpacing
 				if (this.songInfo.alterationChange == true) {
 					this.alterAll();
 				}

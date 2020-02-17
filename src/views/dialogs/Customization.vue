@@ -1,5 +1,5 @@
 <template>
-  <div aria-hidden="true" class="navdrawer navdrawer-right navdrawer-temporary-sm navdrawer-persistent-lg mt-xl-1" id="customization" tabindex="-1">
+  <div aria-hidden="true" class="navdrawer navdrawer-right navdrawer-temporary-sm navdrawer-persistent-md mt-xl-1" id="customization" tabindex="-1">
     <div class="navdrawer-content bg-light text-dark">
       <div class="navdrawer-header bg-light text-dark invisible-lg">
         <a class="navbar-brand px-0" href="#">Přizpůsobit</a>
@@ -8,12 +8,12 @@
         </button>
       </div>
       <div class="navdrawer-nav">
-        <a class="us-none nav-item nav-link" @click="showSettings"><i class="material-icons float-right mt-1" aria-hidden="true">settings</i>&ensp;Nastavení aplikace</a>
+        <a class="us-none nav-item nav-link" @click="showSettings"><i class="material-icons mt-1 mr-2" aria-hidden="true">settings</i>&ensp;Nastavení aplikace</a>
       </div>
       <div class="navdrawer-divider"></div>
       <p class="navdrawer-subheader">Tato píseň</p>
       <ul class="navdrawer-nav">
-        <a class="us-none nav-item nav-link" @click='editNotes'><i class="material-icons">{{noteEditBtnIcon}}</i>&ensp;{{noteEditBtnText}}</a>
+        <a class="us-none nav-item nav-link" @click='editNotes'><i class="material-icons  mr-2">{{noteEditBtnIcon}}</i>&ensp;{{noteEditBtnText}}</a>
         <li class="nav-link bg-light text-dark d-flex justify-content-between">
           <label>Transponovat</label><span><input type="number" v-model="transpValue" v-debounce:200="transp" value="0" min="-6.5" max="6.5" step="0.5" data-decimals="1" /></span>
         </li>
@@ -85,6 +85,7 @@
 import { UIHelpers } from "../../js/Helpers";
 import Settings from "../../js/Settings";
 import { SongDB } from "../../js/databases/SongDB";
+import "bootstrap-input-spinner";
 export default {
 	data() {
 		return {
@@ -120,6 +121,10 @@ export default {
 			this.alter = info.alterationChange;
 			this.transpValue = info.transposition ? info.transposition : 0;
 		});
+		$(() => $(".nav-link>span>input[type='number']").inputSpinner());
+		$(document).on("shown.md.navdrawer", () => {
+			$(".navdrawer-backdrop").remove(), document.body.classList.remove("navdrawer-open-default");
+		});
 	},
 	methods: {
 		editNotes(event) {
@@ -134,7 +139,7 @@ export default {
 					"<i class='material-icons'>info</i>&ensp;Jak přidávat poznámky"
 				);
 			var that = $(this);
-			$("#customization").navdrawer("hide");
+			if (window.innerHeight < process.env.VUE_BREAKPOINT_LG) $("#customization").navdrawer("hide");
 			this.noteEditBtnIcon = "close";
 			this.noteEditBtnText = "Konec editace poznámek";
 			$(btn).one("click", exitDesign);

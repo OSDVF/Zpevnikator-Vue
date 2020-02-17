@@ -109,7 +109,7 @@ const SongDB = {
             this._requestDB();
         }
     },
-    read(resolve, reject, oncomplete, onerror)
+    read(resolve, reject, oncomplete)
     {
         const _this = this;
         _this.getDB(db =>
@@ -119,7 +119,7 @@ const SongDB = {
                 const trans = db.transaction("songIndex", "readonly");
                 trans.onerror = ({ target }) =>
                 {
-                    if (onerror) onerror(target.error);
+                    if (reject) reject(target.error);
                 }
                 trans.oncomplete = oncomplete;
                 if (resolve) resolve(trans.objectStore("songIndex"));
@@ -135,7 +135,7 @@ const SongDB = {
                                 const trans = db.transaction("songIndex", "readonly");
                                 trans.onerror = ({ target }) =>
                                 {
-                                    if (onerror) onerror(target.error);
+                                    if (reject) reject(target.error);
                                 }
                                 trans.oncomplete = oncomplete;
                                 if (resolve) resolve(trans.objectStore("songIndex"));
@@ -149,7 +149,7 @@ const SongDB = {
                             const trans = db.transaction("songIndex", "readonly");
                             trans.onerror = ({ target }) =>
                             {
-                                if (onerror) onerror(target.error);
+                                if (reject) reject(target.error);
                             }
                             trans.oncomplete = oncomplete;
                             if (resolve) resolve(trans.objectStore("songIndex"));
@@ -157,7 +157,6 @@ const SongDB = {
                     }
                 } else
                 {
-                    if (onerror) onerror(e)
                     if (reject) reject(e);
                 }
             }
@@ -165,18 +164,28 @@ const SongDB = {
     },
     get(id, resolve, reject)
     {
-        SongDB.read(songStore =>
+        this.read(songStore =>
         {
             const getReq = songStore.get(id);
             getReq.onsuccess = ({ target }) =>
             {
-                if (resolve) resolve(target.result)
+                if (!target.result && !id.startsWith("offline:"))
+                {
+                    //Může se stát že píseň nějak chybí v indexu, tak ho pro jsitotu stáhneme znova
+                    const clb = () => this.get(id, resolve, reject);
+                    if (this.updatingIndex)
+                        this.afterIndexCallbacks.push(clb);
+                    else
+                        this.downloadIndex(clb);
+                    return;
+                }
+                else if (resolve) resolve(target.result)
             }
             getReq.onerror = ({ target }) =>
             {
                 if (reject) reject(target.error)
             }
-        })
+        }, reject)
     },
     write(resolve, reject, oncomplete, onerror)
     {
@@ -318,8 +327,10 @@ const SongDB = {
                 _class.db = target.result;
                 _class.requestingDB = false;
                 if (!upgraded) //To not run twice when upgrade wa needed
+                {
                     for (let i = 0; i < _class.pendingDBRequests.length; i++)
-                        _class.pendingDBRequests.pop()(_class.db);
+                    { _class.pendingDBRequests.pop()(_class.db); }
+                }
             };
             request.onblocked = ({ target }) =>
             {
