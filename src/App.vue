@@ -8,7 +8,7 @@
       </button>
       <div class="collapse navbar-collapse navbar-toggleable-sm bg-light" id="mainNavCollapse">
         <ul class="navbar-nav mr-auto mt-md-2 mt-xl-0 flex-md-nowrap">
-          <li v-for="item of navPages" class="nav-item mr-xl-2" v-if="!('condition' in item)||item.condition" @click="hideNav">
+          <li v-for="item of navPages" class="nav-item mr-xl-2" v-if="!('condition' in item)||item.condition()" @click="hideNav">
             <router-link :class="'nav-link'+ (pathname==item.href ? ' active':'')" :to="item.href">
               <i class="material-icons mr-2">{{item.icon}}</i>{{item.text}}
             </router-link>
@@ -32,7 +32,7 @@
               <span class="sr-only">Probíhající úlohy</span>
             </a>
           </span>
-          <router-link to="/profile" id="loginButton" data-placement="bottom" @click.native="hideNav()" class="nav-link btn btn-outline-secondary mt-2 mt-lg-0" data-toggle="tooltip" data-container="#mainButtonNav" title="Přihlásit se">
+          <router-link to="/profile" id="loginButton" data-placement="bottom" @click.native="hideNav()" class="nav-link btn btn-outline-secondary mt-2 mt-lg-0" data-toggle="tooltip" data-container="#mainButtonNav" :title="loggedIn?'Můj profil':'Přihlásit se'">
             <i class="material-icons">person</i>
             <span class="sr-only">Přihlásit</span>
           </router-link>
@@ -65,6 +65,7 @@
 import Settings from "./js/Settings";
 import Tasks from "./js/Tasks";
 import { UIHelpers, Environment } from "./js/Helpers";
+
 export default {
 	data: function() {
 		return {
@@ -87,19 +88,19 @@ export default {
 					icon: "view_list"
 				},
 				{
-					condition: !Environment.InsidePwa,
+					condition: () => !Environment.InsidePwa,
 					href: "/offline",
 					text: "Aplikace",
 					icon: "cloud_download"
 				},
 				{
-					condition: Environment.InsidePwa,
+					condition: () => Environment.InsidePwa,
 					href: "/offline",
 					text: "Správa stažených",
 					icon: "cloud_download"
 				},
 				{
-					condition: this.$store.state.userLogged,
+					condition: () => this.loggedIn,
 					href: "/editorTest",
 					text: "Přidat píseň",
 					icon: "add_box"
@@ -131,6 +132,9 @@ export default {
 				//Always unfix on song page
 				return false;
 			return this.preferences.FixedNavbar;
+		},
+		loggedIn() {
+			return this.$store.getters.loggedIn;
 		}
 	},
 	mounted: function() {
@@ -184,7 +188,7 @@ export default {
 		showMainDialog() {
 			if (this.pathname == "/song") {
 				var wide = window.innerWidth > process.env.VUE_APP_BREAKPOINT_LG;
-				this.$nextTick(() => $("#customization").navdrawer({ type: wide ? "persistent" : "temporary"}));
+				this.$nextTick(() => $("#customization").navdrawer({ type: wide ? "persistent" : "temporary" }));
 				this.hideNav();
 			} else {
 				this.settingsDialogShow = true;

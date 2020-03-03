@@ -1,5 +1,6 @@
-var version = require('./package.json').version;
-process.env.VUE_APP_VERSION = version;
+var packageDesc = require('./package.json');
+process.env.VUE_APP_VERSION = packageDesc.version;
+process.env.VUE_APP_REPOSITORY = packageDesc.repository.url;
 
 module.exports = {
   publicPath: "./",

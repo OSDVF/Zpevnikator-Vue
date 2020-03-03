@@ -3,7 +3,7 @@ import
 {
     NetworkUtils
 } from '../Helpers';
-import UserStoredInfo from '../Profiles'
+import UserStoredInfo from './UserInfo';
 const dbName = process.env.VUE_APP_SONG_DB_NAME
 const buildNumber = process.env.VUE_APP_DB_BUILDNUMBER
 const SongDB = {
@@ -435,7 +435,32 @@ const SongDB = {
             console.error("Couldn't delete database due to the operation being blocked");
             if (reject) reject("blocked")
         };
-    }
+    },
+    DeleteUserSpecificSongs(callback)
+    {
+        this.write(function (songStore)
+        {
+            var request = songStore.openCursor();
+            request.onsuccess = function (event)
+            {
+                var cursor = event.target.result;
+                if (cursor)
+                {
+                    if (cursor.value.status)
+                    {
+                        cursor.delete(); //Delete others songs
+                    }
+                    cursor.continue();
+                } else
+                    callback(true);
+            };
+            request.onerror = function (event)
+            {
+                console.error("Error reading songs from DB ", event);
+                callback(false);
+            }
+        })
+    },
 }
 export
 {

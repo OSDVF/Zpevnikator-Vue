@@ -7,6 +7,7 @@ import './registerServiceWorker'
 import router from './router'
 import store from './store'
 import globalManager from './js/global';
+import UserStoredInfo from './js/databases/UserInfo';
 
 //HTTPS Check
 if (process.env.NODE_ENV == 'production' && location.protocol == "http:") location.replace("https://" + location.host + location.pathname + location.search)
@@ -23,4 +24,8 @@ const appInstance = new Vue({
   render: h => h(App)
 });
 globalManager.Vue = appInstance;
+
+if(UserStoredInfo.IsLoggedIn)
+appInstance.$store.commit('logItIn',UserStoredInfo.Info);
+
 appInstance.$mount('#app');

@@ -58,7 +58,7 @@ export default {
 	data() {
 		return {
 			songInfo: { url: "chyba" },
-			songHtml: null,
+			songHtml: loadingBar,
 			lastSongResponse: null,
 			transpositionInfo: "",
 			info: { lastChanged: "Neznámé", downloaded: "Neznámé", adminUrl: "https://dorostmladez.cz/wp-admin/edit.php?post_type=song" },

@@ -37,6 +37,8 @@
 <script>
 import Settings from "@/js/Settings.js";
 import { SongDB } from "@/js/databases/SongDB.js";
+import { SongProcessing} from "@/js/Helpers.js"
+
 const language = require("@/assets/Czeski.json");
 export default {
 	mounted() {

@@ -4,7 +4,7 @@
     <div class="mainInner"></div>
     <div class="mainpage container">
       <h1 class="typography-display-3 my-4" style="line-height:1.35">
-        <span class="d-none d-md-inline">Dorostomládežový</span>Zpěvníkátor
+        <span class="d-none d-md-inline">Dorostomládežový </span>Zpěvníkátor
       </h1>
       <div class="tricker mb-3">
         <h2>Rychlejší 🚀</h2>
@@ -23,10 +23,9 @@
       <p class="typography-subheading">To vše teď umí dorostomládežový zpěvník. Stačí jen vzít něco do ruky 🎹🎸🎤 a začít!</p>
       <div class="typography-caption p">
         {{stable?'Stabilní':'Experimentální'}} verze {{version}} <a href='#changes' data-toggle='collapse' class="text-visible">(poslední změna {{lastUpdate}})</a>
-        <div class="p collapse" id="changes">
-          Poslední změny:<br>
-          <div v-html="lastChanges"></div>
-        </div>
+        <a class="p collapse" id="changes" :href="repository">
+          <pre v-html="lastChanges" class="btn-transparent d-inline-block p-3 mt-2"></pre>
+        </a>
         <div v-if="stable">
           <br />Pokud chcete vidět nejnovější funkce, podívejte se na
           <a href="https://alpha.dorostmladez.cz" class="text-visible">Experimentální verzi</a>
@@ -109,10 +108,11 @@ export default {
 	},
 	created() {
 		this.version = process.env.VUE_APP_VERSION;
+		this.repository = process.env.VUE_APP_REPOSITORY;
 		this.stable = !location.hostname.startsWith("dev.") && location.hostname != "localhost"; //Development hostname
 		const _self = this;
 		(async () => {
-			var ghApiJson = await fetch(process.env.VUE_APP_REPOSITORY + (_self.stable ? "commits/stable" : "commits/master"));
+			var ghApiJson = await fetch(process.env.VUE_APP_REPOSITORY_API + (_self.stable ? "commits/stable" : "commits/master"));
 			var json = await ghApiJson.json();
 			var d = new Date(json.commit.committer.date);
 			_self.lastUpdate = d.toLocaleString();

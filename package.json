@@ -1,5 +1,14 @@
 {
   "name": "zpevnikator",
+  "author": {
+    "name": "OSDVF",
+    "email": "o.s.dv.f@seznam.cz"
+  },
+  "description": "Songbook project rewritten into Vue.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OSDVF/Zpevnikator-Vue.git"
+  },
   "version": "2.0.0",
   "private": true,
   "scripts": {

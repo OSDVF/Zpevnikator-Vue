@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import UserStoredInfo from '../js/databases/UserInfo';
 
 Vue.use(Vuex)
 
@@ -8,7 +9,11 @@ export default new Vuex.Store({
     title: process.env.VUE_APP_NAME,
     workerState: 0,
     modalsCount: 1,
-    userLogged: false,
+    loginState: {
+      name: null,
+      id: null,
+      credentials: null
+    },
     tasks: []
   },
   mutations: {
@@ -29,9 +34,24 @@ export default new Vuex.Store({
     {
       state.modalsCount--;
     },
-    loginState(state, lState)
+    logItIn(state, lState)
     {
-      state.userLogged = lState;
+      UserStoredInfo.ID = lState.id;
+      UserStoredInfo.Name = lState.name;
+      UserStoredInfo.Credentials = lState.credentials;
+
+      if (typeof Together != 'undefined') Together(); //Initialize Zpěvníkátor Together API
+
+      if (typeof Sentry != 'undefined')//If we have a Sentry, inform it about user
+        Sentry.configureScope(function (scope)
+        {
+          scope.setUser({
+            "id": lState.id,
+            "username": lState.name
+          });
+        });
+
+      state.loginState = lState;
     },
     clearCompletedTasks(state)
     {
@@ -39,11 +59,6 @@ export default new Vuex.Store({
       {
         if (state.tasks[i].state == 'completed')
         {
-          /*let tsk = $("#taskList>#task-" + this.activeTasks[i].id).addClass("unopaque");
-          setTimeout(function ()
-          {
-              tsk.remove();
-          }, 500);*/
           state.tasks.splice(i, 1);
         }
       }
@@ -72,8 +87,17 @@ export default new Vuex.Store({
     }
   },
   getters: {
+    loggedIn(state)
+    {
+      return state.loginState.name != null;
+    }
   },
   actions: {
+    logout(store)
+    {
+      store.commit('logItIn', { name: null, id: null, credentials:null });
+      UserStoredInfo.Delete();
+    }
   },
   modules: {
   },

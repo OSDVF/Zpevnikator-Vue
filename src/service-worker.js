@@ -642,14 +642,12 @@ self.addEventListener('activate', function ()
                 else if (downApp == true)
                     dialog("Všechny potřebné soubory byly již staženy. Chcete nyní stáhnout aplikaci?", null, DialogType.YesNo, "Instalovat?", null, appDownload);*/
             })
-        }).catch(function ()
+        }).catch(function (err)
         {
+            console.log("[SW] ",err);
             if (noDownload)
                 return;
-            if (navigator.onLine)
-                registerSync("essential-download");
-            else
-                showSnackbar("<div class=\"snackbar-body\">Až se připojíte online, bude možné stáhnout soubory.</div><button class=\"btn btn-outline-secondary btn-fluid p-2 pr-3\" type=\"button\" onclick=\"checkState()\">Zkusit znovu</button>", null, null, true);
+            precacheEssential(true);
         })
 
     }
