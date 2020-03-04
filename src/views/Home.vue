@@ -104,7 +104,7 @@ import { NetworkUtils } from "@/js/Helpers";
 export default {
 	name: "home",
 	data() {
-		return { lastUpdate: "zjišťování...", lastChanges: "Zjišťování..." };
+		return { lastUpdate: "[zjišťování...]", lastChanges: "Zjišťování..." };
 	},
 	created() {
 		this.version = process.env.VUE_APP_VERSION;

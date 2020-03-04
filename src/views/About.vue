@@ -5,7 +5,7 @@
         <img src="images/icon-144.png" class="float-md-left mx-auto d-block d-md-inline mx-md-3 mb-3">
       </div>
       <div class='col'>
-        <h2>Dorostomládežový Zpěvníkátor</h2>
+        <h2 class="mb-2">Dorostomládežový Zpěvníkátor</h2>
         Toto je projekt Dorostu a Mládeže evangelického sboru Na Rozvoji v Českém Těšíně.<br>
         Původně pro vnitřní účely, avšak možno použít všelijak.<br>
         <a href="http://dorostmladez.cz/">dorostmladez.cz</a><br><br>

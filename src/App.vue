@@ -111,7 +111,7 @@ export default {
 	},
 	components: {
 		AcceptTermsDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/AcceptTerms"),
-		SettingsDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/Settings"),
+		SettingsDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/SettingsDialog"),
 		CustomizationDrawer: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/Customization"),
 		TasksDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/TaskWindow"),
 		ModalDialog: () => import(/* webpackChunkName: "dialogs" */ "./components/Dialog")

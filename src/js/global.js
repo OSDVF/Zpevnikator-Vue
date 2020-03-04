@@ -255,7 +255,7 @@ function setupDatatables()
 }
 function afterWorkerRegistration(clb)
 {
-    if (manager.$store.state.workerState > 0)
+    if (manager.Vue.$store.state.workerState > 0)
         return clb();
     manager.workerReadyWaiting.push(cls);
 }

@@ -87,11 +87,11 @@
             </span>
           </form>
           <a class="btn btn-info my-2" data-toggle="tooltip" title="Vymaže nastavení a cache prohlížeče a stáhne program znovu" @click="clearCache">
-            <i class="material-icons">refresh</i>&ensp;Aktualizovat aplikaci
+            <i class="material-icons">refresh</i>&ensp;Přestáhnout aplikaci
           </a>
           <br />
-          <router-link to="/about">
-            <i class="material-icons">info</i> O aplikaci
+          <router-link to="/about" >
+            <span data-dismiss="modal"><i class="material-icons">info</i> O aplikaci</span>
           </router-link>
         </div>
         <div class="modal-footer">
@@ -110,17 +110,15 @@ import globalManager from "../../js/global";
 export default {
 	data() {
 		return {
-      preferences: this.$parent.preferences,
-      customization: this.$parent.customization
+			preferences: this.$parent.preferences,
+			customization: this.$parent.customization
 		};
-  },
-  computed:
-  {
-    dark()
-    {
-      return this.preferences.Theme == 'dark'
-    }
-  },
+	},
+	computed: {
+		dark() {
+			return this.preferences.Theme == "dark";
+		}
+	},
 	mounted() {
 		$(this.$el)
 			.modal("show")
@@ -138,14 +136,14 @@ export default {
 				Settings.applySettings();
 				UIHelpers.Message("Nastavení uloženo", "success", 3000);
 
-        //Update properties
-        this.$parent.customization = Settings.SongCustomization;
-        this.$parent.preferences = Settings.Preferences;
+				//Update properties
+				this.$parent.customization = Settings.SongCustomization;
+				this.$parent.preferences = Settings.Preferences;
 				/*this.$parent.optimizations = Settings.Optimizations;
 				this.$parent.darkTheme = this.dark = Settings.Theme == "dark";
         this.$parent.fixedNavbar = Settings.FixedNavbar;*/
-        
-        $(this.$el).modal('hide');
+
+				$(this.$el).modal("hide");
 			} catch (e) {
 				console.error(e);
 				if (typeof Sentry != "undefined") Sentry.captureException(e);
@@ -155,7 +153,7 @@ export default {
 			function doCleanDialog() {
 				UIHelpers.Dialog(
 					"Ujistěte se že jste připojeni k internetu abyste mohli stáhnout data aplikace znovu. Vaše osobní poznámky, nastavení a offline písně budou zachovány.<br> Chcete teď smazat a znovu stáhnout aplikaci?",
-					function(result) {
+					result => {
 						if (result == "yes") {
 							navigator.serviceWorker.getRegistration().then(function(reg) {
 								if (reg && reg.waiting) reg.waiting.postMessage({ tag: "skipWaiting" });
@@ -172,13 +170,14 @@ export default {
 								.then(function(keyList) {
 									return Promise.all(
 										keyList.map(function(key) {
-											if (typeof songCache == "undefined") return caches.delete(key);
-											else if (key != songCache) return caches.delete(key);
+											if (key != process.env.VUE_APP_SONG_DB_NAME) return caches.delete(key);
 										})
 									);
 								})
 								.then(function() {
-									if (!globalManager.registerSync("clean")) location.reload(true);
+									globalManager.registerSync("clean").then(res => {
+										if (res == false) location.reload(true);
+									});
 								});
 						}
 					},
