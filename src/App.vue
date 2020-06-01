@@ -27,10 +27,7 @@
             </a>
           </span>
           <span @click='tasksDialogShow=true' data-toggle="modal" data-target="#tasks" class="mt-2 mt-lg-0 btn btn-outline-dark">
-            <a data-toggle="tooltip" class="d-block w-100" data-container="#mainButtonNav" data-placement="bottom" title="Probíhající úlohy" aria-label="Probíhající úlohy">
-              <i class="material-icons" aria-hidden="true" ref='tasksBtnIcon'>assistant</i>
-              <span class="sr-only">Probíhající úlohy</span>
-            </a>
+            <TasksButton />
           </span>
           <router-link to="/profile" id="loginButton" data-placement="bottom" @click.native="hideNav()" class="nav-link btn btn-outline-secondary mt-2 mt-lg-0" data-toggle="tooltip" data-container="#mainButtonNav" :title="loggedIn?'Můj profil':'Přihlásit se'">
             <i class="material-icons">person</i>
@@ -63,7 +60,7 @@
 
 <script>
 import Settings from "./js/Settings";
-import Tasks from "./js/Tasks";
+import TasksButton from './components/TasksButton';
 import { UIHelpers, Environment } from "./js/Helpers";
 
 export default {
@@ -114,7 +111,8 @@ export default {
 		SettingsDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/SettingsDialog"),
 		CustomizationDrawer: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/Customization"),
 		TasksDialog: () => import(/* webpackChunkName: "dialogs" */ "./views/dialogs/TaskWindow"),
-		ModalDialog: () => import(/* webpackChunkName: "dialogs" */ "./components/Dialog")
+		ModalDialog: () => import(/* webpackChunkName: "dialogs" */ "./components/Dialog"),
+		TasksButton: TasksButton
 	},
 	computed: {
 		headerTitle() {
@@ -141,7 +139,6 @@ export default {
 		this.localHistory = [this.pathname];
 		var _class = this;
 		UIHelpers.appReferences = this.$refs;
-		Tasks.indicatorElement = this.$refs.tasksBtnIcon;
 		this.$router.beforeEach((to, from, next) => {
 			_class.pathname = to.path;
 			_class.preferences = Settings.Preferences;

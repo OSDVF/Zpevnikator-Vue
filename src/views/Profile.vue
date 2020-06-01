@@ -86,7 +86,10 @@ export default {
 	computed: {
 		loggedIn() {
 			const ret = this.$store.getters.loggedIn;
+			try{
 			if (ret == false && this.tabs) this.tabs.destroy(); //We must destroy the tabview when loggin off, otherwise it would conflict with DOM
+			}
+			catch(e){}
 			this.$store.commit("changeTitle", ret?'Můj profil':'Přihlášení');
 			return ret;
 		}

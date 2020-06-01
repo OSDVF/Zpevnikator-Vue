@@ -13,19 +13,18 @@ class Task
     {
         this.state = 'running';
         globalManager.Vue.$store.commit('addTask', this);
-        Tasks.updateTaskCount();
     }
     completed()
     {
         this.state = 'completed';
-        Tasks.updateTaskCount();
+        globalManager.Vue.$emit('someTaskCompleted');
     }
     delete()
     {
         globalManager.Vue.$store.commit('removeTask', this.id);
     }
 }
-const Tasks = {
+var Tasks = {
     /**
      * @type HTMLElement
      */
@@ -37,26 +36,6 @@ const Tasks = {
         event.preventDefault();
         event.returnValue = text;
         return text;
-    },
-    updateTaskCount()
-    {
-        var count = this.UncompletedCount;
-        if (count > 9)
-            this.indicatorElement.innerHTML = "filter_9_plus";
-        else if (count == 0)
-        {
-            this.indicatorElement.innerHTML = ("assistant");
-            window.removeEventListener('beforeunload', this.makeUserSure);
-            this.assignedSureDetection = false;
-        } else
-        {
-            this.indicatorElement.innerHTML = ("filter_" + count);
-            if (!this.assignedSureDetection)
-            {
-                window.addEventListener('beforeunload', this.makeUserSure);
-                this.assignedSureDetection = true;
-            }
-        }
     },
     AddActive(name, description, icon) //Returns "Task" object
     {
@@ -138,7 +117,6 @@ const Tasks = {
         });
         Tasks.Find(id).completed = true;
         $("#clearTasks").removeClass("unopaque");
-        this.updateTaskCount();
     },
     MarkFailed: function (id)
     {
@@ -152,7 +130,6 @@ const Tasks = {
         Tasks.Find(id).completed = true;
         Tasks.Find(id).failed = true;
         $("#clearTasks").removeClass("unopaque");
-        this.updateTaskCount();
     },
     ClearCompleted: function ()
     {

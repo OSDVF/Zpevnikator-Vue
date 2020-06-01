@@ -104,6 +104,13 @@ export default {
 
 		_class.updateTable();
 	},
+	beforeDestroy() {
+		try {
+			$("tr i").toolitp("dispose"); //If we don't destroy the tooltip, it would persist for ever
+		} catch (e) {
+			//No toolitps existed
+		}
+	},
 	methods: {
 		tableClick(e) {
 			//Set last list scroll variable in local storage to current scroll value
@@ -237,7 +244,7 @@ export default {
 			const _class = this;
 			if (!this.searchInterval)
 				this.searchInterval = setTimeout(function() {
-					if (_class.searchVal.length) _class.$$refs.searchBar.focus();
+					if (_class.searchVal.length) _class.$refs.searchBar.focus();
 					_class.tab.search(jQuery.fn.DataTable.ext.type.search.html(_class.searchVal)).draw();
 					_class.searchInterval = 0;
 				}, 100);

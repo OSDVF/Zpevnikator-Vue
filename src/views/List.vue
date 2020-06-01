@@ -37,6 +37,11 @@ export default {
 			//Restore previous scroll position
 			document.documentElement.scrollTop = lastListScroll;
 		localStorage.removeItem(this.$route.name+"lastListScroll");
+
+		if(performance.navigation.type ==1)//Page was reloaded
+		{
+			this.refreshListClicked();
+		}
 	}
 };
 </script>
