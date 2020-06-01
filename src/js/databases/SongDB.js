@@ -1,4 +1,5 @@
 import Tasks from '../Tasks'
+import Vue from 'vue'
 import
 {
     NetworkUtils
@@ -7,19 +8,16 @@ import UserStoredInfo from './UserInfo';
 const dbName = process.env.VUE_APP_SONG_DB_NAME
 const buildNumber = process.env.VUE_APP_DB_BUILDNUMBER
 const SongDB = {
+    eventBus: new Vue(),
     updatingIndex: false,
-    afterIndexCallbacks: [],
     pendingDBRequests: [],
     onmessage: console.log,
-    afterIndexUpdate(callback)
-    {
-        this.afterIndexCallbacks.push(callback);
-    },
     downloadIndex(callback)
     {
         this.updatingIndex = true;
         let createIndexTask;
         SongDB.onmessage("Aktualizace indexu písní...", null, 2000);
+        this.eventBus.$emit("indexUpdating");
         if (callback)
             $("#songStatus").html("Stahování indexu...");
         createIndexTask = Tasks.AddActive("Stahování seznamu písní", null, "assignment");
@@ -76,8 +74,7 @@ const SongDB = {
                 createIndexTask.completed();
                 SongDB.updatingIndex = false;
                 if (callback) callback();
-                for (let y = 0; y < SongDB.afterIndexCallbacks.length; y++)
-                    SongDB.afterIndexCallbacks.pop()();
+                SongDB.eventBus.$emit("indexUpdated");
             }, () =>
             {
                 createIndexTask.failed();
@@ -174,7 +171,7 @@ const SongDB = {
                     //Může se stát že píseň nějak chybí v indexu, tak ho pro jsitotu stáhneme znova
                     const clb = () => this.get(id, resolve, reject);
                     if (this.updatingIndex)
-                        this.afterIndexCallbacks.push(clb);
+                        this.eventBus.$on("indexUpdated",clb);
                     else
                         this.downloadIndex(clb);
                     return;

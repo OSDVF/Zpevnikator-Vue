@@ -1,6 +1,6 @@
 <template>
   <main ref="main">
-    <div v-if="loggedIn" style="position: absolute; left: 0px; right: 0px; bottom: 0px; top: 0px;">
+    <div v-show="loggedIn" style="position: absolute; left: 0px; right: 0px; bottom: 0px; top: 0px;">
       <div id="songsTab">
         <songs @scroll.passive="onTabScroll" />
       </div>
@@ -22,7 +22,7 @@
         </ul>
       </div>
     </div>
-    <div v-else class="container">
+    <div v-if="!loggedIn" class="container">
       <form id="loginForm" method="POST" @submit.prevent="tryLogin">
         <div class="form-group">
           <label for="login">Jméno</label>
@@ -86,15 +86,15 @@ export default {
 	computed: {
 		loggedIn() {
 			const ret = this.$store.getters.loggedIn;
-			if (ret == false && this.tabs) this.tabs.destroy();//We must destroy the tabview when loggin off, otherwise it would conflict with DOM
-
+			if (ret == false && this.tabs) this.tabs.destroy(); //We must destroy the tabview when loggin off, otherwise it would conflict with DOM
+			this.$store.commit("changeTitle", ret?'Můj profil':'Přihlášení');
 			return ret;
 		}
 	},
 	mounted() {
 		this.prevScroll = 0;
 		this.navShown = true;
-		$(this.whileLogged);
+		if (this.loggedIn) $(this.whileLogged);
 
 		var m = $(this.$refs.main);
 		m.css("--offsetMain", m.offset().left + "px");
@@ -128,12 +128,11 @@ export default {
 									SongDB.downloadIndex(() => {
 										this.loginPending = false;
 										this.loginInfoShow = false;
-										this.whileLogged();
+										this.$store.commit("logItIn", { id: response.id, credentials: response.data, name: this.typedUsername });
+										this.$nextTick(this.whileLogged);
 									});
 								});
 								console.info("Login succesfull");
-
-								this.$store.commit("logItIn", { id: response.id, credentials: response.data, name: this.typedUsername });
 
 								this.pendinInfo = "Čekání na informace o účtu....";
 								this.loginInfoShow = true;

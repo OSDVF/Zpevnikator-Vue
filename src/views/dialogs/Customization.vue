@@ -156,13 +156,3 @@ export default {
 	}
 };
 </script>
-
-<style>
-#songWrapper p {
-	border-bottom: 2px dashed #86868668;
-	margin-bottom: var(--pMargin);
-}
-#songWrapper.no-chords p {
-	padding-bottom: 0.3rem;
-}
-</style>

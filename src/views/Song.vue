@@ -1,7 +1,7 @@
 <template>
   <main class="container">
     <div class="float-md-right">
-      <div id="transpositionInfo" class="text-secondary font-weight-bold mr-lg-5" v-if='transpositionInfo.length'>Transponováno o {{transpositionInfo>0?('+'+transpositionInfo):transpositionInfo}}</div>
+      <div class="text-secondary font-weight-bold mr-lg-5" v-if='transpositionInfo.length'>Transponováno o {{transpositionInfo>0?('+'+transpositionInfo):transpositionInfo}}</div>
     </div>
     <div id="songWrapper" v-html="songHtml" :style="wrapperStyle" :class='wrapperClasses'>
     </div>
@@ -167,8 +167,10 @@ export default {
 			}
 		},
 		changeDisplayedSong(url, forceFetch) {
+			document.documentElement.scrollTop = 0;
 			const _class = this;
 			SongDB.get(url, async inf => {
+				if (!inf.transposition) inf.transposition = 0;
 				_class.songInfo = { ..._class.songInfo, ...inf };
 				_class.$store.commit("changeTitle", inf.name);
 				if (inf.status) {
@@ -456,3 +458,12 @@ export default {
 	}
 };
 </script>
+<style>
+#songWrapper p {
+	border-bottom: 2px dashed #86868668;
+	margin-bottom: var(--pMargin);
+}
+#songWrapper.no-chords p {
+	padding-bottom: 0.3rem;
+}
+</style>
