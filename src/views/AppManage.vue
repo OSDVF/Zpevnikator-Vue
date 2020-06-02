@@ -170,7 +170,7 @@ export default {
 			browserDetected: false,
 			verdictClass: "text-primary",
 			allSongsDown: true,
-			songDownloadStatus
+			songDownloadStatus:null
 		};
 	},
 	created() {

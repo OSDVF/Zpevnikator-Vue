@@ -15,10 +15,10 @@
       </div>
       <div class="fixed-bottom" id="bottomNav" ref="bottomNav">
         <ul id="bottomTabs" class="nav tabs nav-justified">
-          <li class="tab nav-item"><a href="#songsTab" class="active" data-target><i class="material-icons">music_note</i></a></li>
-          <li class="tab nav-item"><a href="#groupsTab" data-target><i class="material-icons">group</i></a></li>
-          <li class="tab nav-item"><a href="#playlistsTab" data-target><i class="material-icons">queue_music</i></a></li>
-          <li class="tab nav-item"><a href="#settingsTab" data-target><i class="material-icons">build</i></a></li>
+          <li class="tab nav-item"><a href="#songsTab" class="active" data-target="tooltip" title="Mé písně"><i class="material-icons">music_note</i></a></li>
+          <li class="tab nav-item"><a href="#groupsTab" data-target="tooltip" title="Skupiny"><i class="material-icons">group</i></a></li>
+          <li class="tab nav-item"><a href="#playlistsTab" data-target="tooltip" title="Playlisty"><i class="material-icons">queue_music</i></a></li>
+          <li class="tab nav-item"><a href="#settingsTab" data-target="tooltip" title="Můj profil"><i class="material-icons">person</i></a></li>
         </ul>
       </div>
     </div>
@@ -86,13 +86,15 @@ export default {
 	computed: {
 		loggedIn() {
 			const ret = this.$store.getters.loggedIn;
-			try{
-			if (ret == false && this.tabs) this.tabs.destroy(); //We must destroy the tabview when loggin off, otherwise it would conflict with DOM
-			}
-			catch(e){}
-			this.$store.commit("changeTitle", ret?'Můj profil':'Přihlášení');
+			try {
+				if (ret == false && this.tabs) this.tabs.destroy(); //We must destroy the tabview when loggin off, otherwise it would conflict with DOM
+			} catch (e) {}
+			this.$store.commit("changeTitle", ret ? "Mé písně" : "Přihlášení");
 			return ret;
 		}
+	},
+	created() {
+		this.themeState = false;
 	},
 	mounted() {
 		this.prevScroll = 0;
@@ -101,6 +103,9 @@ export default {
 
 		var m = $(this.$refs.main);
 		m.css("--offsetMain", m.offset().left + "px");
+	},
+	activated() {
+		this.$parent.applyThemeToChildren(); //Because tabs would stay unaffected
 	},
 	methods: {
 		onTabScroll(event) {
@@ -167,6 +172,9 @@ export default {
 				swipeable: true,
 				onShow: () => {
 					this.$refs.bottomNav.classList.remove("hidden");
+				},
+				onTabClick: a => {
+					this.$store.commit("changeTitle", a[0].title);
 				}
 			});
 		}

@@ -31,10 +31,15 @@ import { SongDB } from "@/js/databases/SongDB.js";
 export default {
 	data() {
 		return {
-			preferences: this.$parent.$parent.preferences,
 			searchVal: ""
 		};
 	},
+	props: {
+      filter: {
+        type: Function
+	  },
+	  preferences: Object
+    },
 	mounted() {
 		const _class = this;
 		this.cursorEnded = false; //To control whether initialization was completed
@@ -137,6 +142,8 @@ export default {
 							function processRow(match, entryNumber) {
 								lastEntryNumber = entryNumber;
 								var offl = !!match;
+								if(typeof _class.filter == 'function'&&!_class.filter(value,offl))
+									return;
 								if (offl && !_class.preferences.DisplayedOfflineListInfo && !infDisplayed) {
 									infDisplayed = true;
 									_class.$emit("offlineSongsExist");
@@ -199,6 +206,8 @@ export default {
 						if (Sentry) Sentry.captureException(e);
 						UIHelpers.Message("Chyba při čtení z indexu", "danger", 1000);
 					};
+				},function(e){
+					console.error("Chyba při přístupu k databázi",e);
 				});
 			} catch (e) {
 				UIHelpers.Message("Chyba při generování tabulky", "danger", 2000);

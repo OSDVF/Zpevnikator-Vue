@@ -5,8 +5,13 @@ import
     NetworkUtils
 } from '../Helpers';
 import UserStoredInfo from './UserInfo';
+import { fromBase64 } from 'bytebuffer';
 const dbName = process.env.VUE_APP_SONG_DB_NAME
 const buildNumber = process.env.VUE_APP_DB_BUILDNUMBER
+/**
+* @callback databaseResolveCallback
+* @param {IDBObjectStore} store
+*/
 const SongDB = {
     eventBus: new Vue(),
     updatingIndex: false,
@@ -106,6 +111,11 @@ const SongDB = {
             this._requestDB();
         }
     },
+
+    /**
+     * Opens a read pipe
+     * @param {databaseResolveCallback} resolve 
+     */
     read(resolve, reject, oncomplete)
     {
         const _this = this;
@@ -171,7 +181,7 @@ const SongDB = {
                     //Může se stát že píseň nějak chybí v indexu, tak ho pro jsitotu stáhneme znova
                     const clb = () => this.get(id, resolve, reject);
                     if (this.updatingIndex)
-                        this.eventBus.$on("indexUpdated",clb);
+                        this.eventBus.$on("indexUpdated", clb);
                     else
                         this.downloadIndex(clb);
                     return;
@@ -325,8 +335,7 @@ const SongDB = {
                 _class.requestingDB = false;
                 if (!upgraded) //To not run twice when upgrade wa needed
                 {
-                    for (let i = 0; i < _class.pendingDBRequests.length; i++)
-                    { _class.pendingDBRequests.pop()(_class.db); }
+                    _class.pendingDBRequests.forEach(fn => fn(_class.db));
                 }
             };
             request.onblocked = ({ target }) =>

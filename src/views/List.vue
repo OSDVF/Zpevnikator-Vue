@@ -6,7 +6,7 @@
         Rozumím
       </button>
     </div>
-    <SongList @offline-songs-exist="offlineInfoDisplay" ref="songList"/>
+    <SongList @offline-songs-exist="offlineInfoDisplay" ref="songList" :preferences="$parent.preferences"/>
 	<div class="fab-right">
       <button class="btn btn-float btn-secondary m-3" type="button" data-placement="left" data-toggle="tooltip" title="Aktualizovat seznam" @click="refreshListClicked">
         <i class="material-icons">refresh</i>
