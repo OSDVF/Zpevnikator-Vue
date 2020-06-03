@@ -2,7 +2,7 @@
   <div class="likeMain">
     <div class="card bg-light">
       <div class="card-body">
-        <h5 class="card-title"><i class="material-icons">person_pin</i><span class="pl-3">{{$store.state.loginState.name}}</span></h5>
+        <h5 class="card-title"><i class="material-icons" :style="$parent.getHslColor(name)">person_pin</i><span class="pl-3">{{name}}</span></h5>
         <div class="card-text">
           <div class="row">
             <span class="col-6 list-group-item strong">Jméno</span>
@@ -32,6 +32,7 @@ import { SongDB } from "../../js/databases/SongDB";
 export default {
 	data() {
 		return {
+      name:this.$store.state.loginState.name,
 			fullName: "Neznámé",
 			addedSongs: "Neznámé",
 			publishedSongs: "Neznámé"

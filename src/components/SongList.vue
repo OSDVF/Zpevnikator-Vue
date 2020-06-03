@@ -16,6 +16,7 @@
           <th>Název</th>
           <th>Autor</th>
           <th>Jazyk</th>
+          <th v-if="additionalButtons&&additionalButtons.length">Akce</th>
         </tr>
       </thead>
     </table>
@@ -35,11 +36,14 @@ export default {
 		};
 	},
 	props: {
-      filter: {
-        type: Function
-	  },
-	  preferences: Object
-    },
+		filter: {
+			type: Function
+		},
+		additionalButtons: {
+			type: Array
+		},
+		preferences: Object
+	},
 	mounted() {
 		const _class = this;
 		this.cursorEnded = false; //To control whether initialization was completed
@@ -129,86 +133,114 @@ export default {
 		upd(cache) {
 			const _class = this; //TODO: how do we filter author things?
 			try {
-				SongDB.read(function(songStore) {
-					var request = songStore.openCursor();
-					var processedEntries = 0;
-					var lastEntryNumber = 0;
-					var infDisplayed = false;
-					request.onsuccess = function(event) {
-						var cursor = event.target.result;
-						if (cursor) {
-							processedEntries++;
-							let value = cursor.value;
-							function processRow(match, entryNumber) {
-								lastEntryNumber = entryNumber;
-								var offl = !!match;
-								if(typeof _class.filter == 'function'&&!_class.filter(value,offl))
-									return;
-								if (offl && !_class.preferences.DisplayedOfflineListInfo && !infDisplayed) {
-									infDisplayed = true;
-									_class.$emit("offlineSongsExist");
+				SongDB.read(
+					function(songStore) {
+						var request = songStore.openCursor();
+						var processedEntries = 0;
+						var lastEntryNumber = 0;
+						var infDisplayed = false;
+						request.onsuccess = function(event) {
+							var cursor = event.target.result;
+							if (cursor) {
+								processedEntries++;
+								let value = cursor.value;
+								function processRow(match, entryNumber) {
+									lastEntryNumber = entryNumber;
+									var offl = !!match;
+									if (typeof _class.filter == "function" && !_class.filter(value, offl)) return;
+									if (offl && !_class.preferences.DisplayedOfflineListInfo && !infDisplayed) {
+										infDisplayed = true;
+										_class.$emit("offlineSongsExist");
+									}
+									value.author = value.author || "";
+									value.language = value.language || "";
+									if (value.imported) value.name += '&ensp;<i class="text-muted imp material-icons">open_in_browser</i>';
+									if (value.status) {
+										value.name += "&ensp;" + SongProcessing.statusToIcon(value.status);
+									} else if (value.offlineOnly) value.name += '&ensp;<i class="text-warning oonly material-icons">cloud_off</i>';
+
+									//Now construct the table
+									var tr = document.createElement("TR");
+									tr.setAttribute("href", value.url);
+									if (offl) tr.classList.add("offline");
+
+									//Additional buttons processing
+									var actionsTd;
+									if (_class.additionalButtons) {
+										var actionsTd = document.createElement("TD");
+										actionsTd.className="p-0";//No padding
+										for (var btn of _class.additionalButtons) {
+											var newButton = document.createElement("SPAN");
+											newButton.classList.add("btn");
+											newButton.setAttribute("data-target", "tooltip");
+											if (btn.class) newButton.classList.add(btn.class);
+											if (btn.title) newButton.title = btn.title;
+											if (btn.icon) {
+												var iconElem = document.createElement("i");
+												iconElem.className = "material-icons";
+												iconElem.innerHTML = btn.icon;
+												newButton.appendChild(iconElem);
+											}
+											if (typeof btn.onClick == "function") newButton.onclick = btn.onClick;
+											actionsTd.appendChild(newButton);
+										}
+										tr.appendChild(actionsTd);
+									}
+
+									//Table cells
+									var nameTd = document.createElement("TD");
+									nameTd.innerHTML = value.name;
+									var authorTd = document.createElement("TD");
+									authorTd.innerHTML = value.author;
+									var languageTd = document.createElement("TD");
+									languageTd.innerHTML = value.language;
+
+									tr.prepend(languageTd);
+									tr.prepend(authorTd);
+									tr.prepend(nameTd);
+
+									_class.tab.row.add(tr);
+									if (_class.cursorEnded && lastEntryNumber != processedEntries) {
+										_class.searchTable();
+										console.debug("Cursor ended. Searching");
+									}
 								}
-								value.author = value.author || "";
-								value.language = value.language || "";
-								if (value.imported) value.name += '&ensp;<i class="text-muted imp material-icons">open_in_browser</i>';
-								if (value.status) {
-									value.name += "&ensp;" + SongProcessing.statusToIcon(value.status);
-								} else if (value.offlineOnly) value.name += '&ensp;<i class="text-warning oonly material-icons">cloud_off</i>';
-								_class.tab.row.add(
-									$(
-										"<tr" +
-											' href="' +
-											value.url +
-											'"' +
-											(offl ? " class='offline'>" : ">") +
-											"<td>" +
-											value.name +
-											"</td><td>" +
-											value.author +
-											"</td><td>" +
-											value.language +
-											"</tr>"
-									)[0]
-								);
-								if (_class.cursorEnded && lastEntryNumber != processedEntries) {
+								if (cache)
+									cache.match("/api/getsong.php?id=" + value.url + "&nospace=true").then(function(mtch) {
+										processRow(mtch, processedEntries);
+									});
+								else processRow(null, processedEntries);
+								cursor.continue();
+							} else if (!processedEntries) {
+								setTimeout(function() {
+									if (!SongDB.updatingIndex) {
+										SongDB.downloadIndex();
+									}
+									$(".dataTables_empty").html("Počkejte na stažení indexu...&ensp;<i class='material-icons rotating'>autorenew</i><br><a href='offline'>Stáhnout manuálně</a>");
+									window.waitingForIndex = true;
+								}, 1000); //To give index download job some time to start
+							} else {
+								_class.cursorEnded = true;
+								if (window.tableWraperElement) {
+									_class.searchQuery = $("#searchBar").val() || _class.tab.search();
+								}
+								if (lastEntryNumber == processedEntries) {
+									//Cache processed all before this line gets executed
 									_class.searchTable();
-									console.debug("Cursor ended. Searching");
+									console.debug("Last entry number = processedEntries. Searching");
 								}
 							}
-							if (cache)
-								cache.match("/api/getsong.php?id=" + value.url + "&nospace=true").then(function(mtch) {
-									processRow(mtch, processedEntries);
-								});
-							else processRow(null, processedEntries);
-							cursor.continue();
-						} else if (!processedEntries) {
-							setTimeout(function() {
-								if (!SongDB.updatingIndex) {
-									SongDB.downloadIndex();
-								}
-								$(".dataTables_empty").html("Počkejte na stažení indexu...&ensp;<i class='material-icons rotating'>autorenew</i><br><a href='offline'>Stáhnout manuálně</a>");
-								window.waitingForIndex = true;
-							}, 1000); //To give index download job some time to start
-						} else {
-							_class.cursorEnded = true;
-							if (window.tableWraperElement) {
-								_class.searchQuery = $("#searchBar").val() || _class.tab.search();
-							}
-							if (lastEntryNumber == processedEntries) {
-								//Cache processed all before this line gets executed
-								_class.searchTable();
-								console.debug("Last entry number = processedEntries. Searching");
-							}
-						}
-					};
-					request.onerror = function(event) {
-						console.error("Error reading songs from DB ", event);
-						if (Sentry) Sentry.captureException(e);
-						UIHelpers.Message("Chyba při čtení z indexu", "danger", 1000);
-					};
-				},function(e){
-					console.error("Chyba při přístupu k databázi",e);
-				});
+						};
+						request.onerror = function(event) {
+							console.error("Error reading songs from DB ", event);
+							if (Sentry) Sentry.captureException(e);
+							UIHelpers.Message("Chyba při čtení z indexu", "danger", 1000);
+						};
+					},
+					function(e) {
+						console.error("Chyba při přístupu k databázi", e);
+					}
+				);
 			} catch (e) {
 				UIHelpers.Message("Chyba při generování tabulky", "danger", 2000);
 				console.error(e);

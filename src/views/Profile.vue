@@ -61,6 +61,7 @@
 </template>
 <script>
 import { SongDB } from "../js/databases/SongDB";
+import { SongProcessing } from "@/js/Helpers";
 import GroupsTab from "./together/GroupsTab";
 import SettingsTab from "./together/SettingsTab";
 import SongsTab from "./together/SongsTab";
@@ -74,7 +75,16 @@ export default {
 			loginInfoShow: false,
 			pendinInfo: loginFailed,
 			typedUsername: null,
-			typedPassword: null
+			typedPassword: null,
+			groups: [
+				{
+					name: "Načítání",
+					iAmAdmin: true
+				},
+				{
+					name: "Test2"
+				}
+			]
 		};
 	},
 	components: {
@@ -177,6 +187,9 @@ export default {
 					this.$store.commit("changeTitle", a[0].title);
 				}
 			});
+		},
+		getHslColor(str) {
+			return "color:hsl(" + (SongProcessing.strHash(str) % 360) + ",54%,50%)";
 		}
 	}
 };

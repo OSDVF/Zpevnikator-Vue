@@ -65,7 +65,7 @@ const SongProcessing = {
 	chordProToHtml: function (text)
 	{
 		text = "<span class='lyric'>" + text;
-		text = text.replace(/\[([A-Z<(\/][^\[\]]*)\]/gi, function (match, p1)
+		text = text.replace(/\[([A-Z<(\/][^\[\]]*)\]/gi, function (_match, p1)
 		{
 			return "</span><span class='chord'>" + p1.charAt(0).toUpperCase() + p1.slice(1) + "</span><span class='lyric'>"; //First letter uppercase
 		})
@@ -188,6 +188,17 @@ const SongProcessing = {
 		saved = saved && saved != '<p><span class="lyric"><br></span></p>';
 		saved = saved && localStorage.getItem(settingsPrefix + 'editedDirty') == 'true';
 		return saved;
+	},
+	strHash(str)
+	{
+		var hash = 0, i, chr;
+		for (i = 0; i < str.length; i++)
+		{
+			chr = str.charCodeAt(i);
+			hash = ((hash << 5) - hash) + chr;
+			hash |= 0; // Convert to 32bit integer
+		}
+		return hash;
 	}
 };
 const IOUtils = {
@@ -266,8 +277,18 @@ const UIHelpers = {
 		"NoButtonsWeak": 6
 	}),
 	/**
+	 * The complete Triforce, or one or more components of the Triforce.
+	 * @typedef {Object} DialogType
+	 * @property Ok
+	 * @property OkCancel
+	 * @property YesNo
+	 * @property AbortRetryIgnore
+	 * @property NoButtons
+	 * @property NoButtonsWeak Makes the dialog disappeear wher user clicks in outer space
+	 */
+	/**
 	 * Displays a procedural bootstrap modal
-	 * @param {string} text Inner text to display
+	 * @param {string|Node} text Inner text or inner nodes to display
 	 * @param {function} callback Occurs when user clicks one of buttons. Gets one value passed: ok|cancel|yes|no
 	 * @param {(DialogType|string|Array)} type One of values of DialogType, custom string for custom 'Ok' button text or an Array in format [ok,cancel] for custom text for these buttons
 	 * @param {string} header Text in header 
@@ -287,7 +308,6 @@ const UIHelpers = {
 	pendingMessages: [],
 	placeSnackbar($snackbar, text, type, timeout, multiline)
 	{
-		"use strict";
 		$snackbar.addClass(() =>
 		{
 			setTimeout(() =>

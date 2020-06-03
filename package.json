@@ -18,23 +18,24 @@
     "Build-Dev": "vue-cli-service build --mode development"
   },
   "dependencies": {
-    "bootstrap-input-spinner": "^1.13.3",
+    "bootstrap-input-spinner": "^1.13.5",
     "bytebuffer": "^3.5.5",
-    "core-js": "^3.4.4",
+    "core-js": "^3.6.5",
     "long": "^4.0.0",
     "pson": "^2.0.0",
-    "register-service-worker": "^1.6.2",
+    "register-service-worker": "^1.7.1",
     "vue": "^2.6.10",
-    "vue-debounce": "^2.3.0",
-    "vue-router": "^3.1.3",
-    "vuex": "^3.1.2"
+    "vue-debounce": "^2.5.6",
+    "vue-router": "^3.3.2",
+    "vuex": "^3.4.0"
   },
   "devDependencies": {
-    "@vue/cli-plugin-pwa": "^4.1.0",
-    "@vue/cli-plugin-router": "^4.1.0",
-    "@vue/cli-plugin-vuex": "^4.1.0",
-    "@vue/cli-service": "^4.1.0",
-    "sass": "^1.23.7",
+    "@vue/cli-plugin-pwa": "^4.4.1",
+    "@vue/cli-plugin-router": "^4.4.1",
+    "@vue/cli-plugin-vuex": "^4.4.1",
+    "@vue/cli-service": "^4.4.1",
+    "raw-loader": "^4.0.1",
+    "sass": "^1.26.7",
     "sass-loader": "^8.0.0",
     "vue-template-compiler": "^2.6.10"
   },

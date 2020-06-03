@@ -6,7 +6,7 @@
           <h5 class="modal-title" v-html="headerData"></h5>
         </div>
         <div class="modal-body">
-          <P v-html="textData">
+          <P v-html="textData" ref="innerContent">
           </P>
         </div>
         <div class="modal-footer">
@@ -45,7 +45,7 @@ export default {
 	props: {
 		header: String,
 		footer: String,
-		text: String,
+		text: Object,
 		type: {
 			type:String,
 			validator: (val) => ['top', 'right', 'bottom', 'left'].includes(val),
@@ -66,7 +66,8 @@ export default {
 	},
 	methods: {
 		setData(text, callback, type, header, footer, positiveEventListener) {
-			this.textData = text;
+			if(typeof text == "string") this.textData = text;
+			else if(text instanceof Node) this.$refs.innerContent.append(text);
 			this.click = callback;
 			this.typeData = type;
 			this.headerData = header;
