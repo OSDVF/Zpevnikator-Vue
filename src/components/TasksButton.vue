@@ -20,7 +20,6 @@ export default {
 		}
 	},
 	mounted() {
-        Tasks.indicatorElement = this.$refs.tasksBtnIcon;
         this.$root.$on("someTaskCompleted",this.updateIndicator);
     },
     methods:{

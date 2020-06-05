@@ -8,10 +8,13 @@ Vznikl pro potřeby [Dorostu a mládeže na Rozvoji](http://dorostmladez.cz)
 ### Publikované verze
 - [Stabilní](https://chvaly.dorostmladez.cz)
 - [Experimentální](https://dev.dorostmladez.cz) - aktualizována při každé změně
-- Zastaralé [1.](https://legacy1.dorostmladez.cz/) [2.](https://legacy2.dorostmladez.cz/)
+- Zastaralé [1](https://legacy1.dorostmladez.cz/) [2](https://legacy2.dorostmladez.cz/)
+
+### [Dokumentace](https://dev.dorostmladez.cz/docs/index.html)
 
 ### A co backend?
-Hrůza. Používá interně Wordpress. Ale credits mainly to [sjiamnocna](https://github.com/sjiamnocna)
+Hrůza. Používá interně Wordpress. Ale credits mainly to [sjiamnocna](https://github.com/sjiamnocna).  
+Ale ano, samozřejmě [na to máme wrapper](https://github.com/OSDVF/Zpevnikator-Backend)
 
 
 ## Project setup

@@ -238,7 +238,7 @@ export default {
 			var songsArray = [];
 			caches.open(process.env.VUE_APP_SONG_DB_NAME).then(function(cache) {
 				return cache.keys().then(function(keys) {
-					cache.matchAll("/api/getsong.php", { ignoreSearch: true }).then(function(responses) {
+					cache.matchAll(process.env.VUE_APP_API_URL+"/songs/get.php", { ignoreSearch: true }).then(function(responses) {
 						return SongDB.read(function(songStore) {
 							for (let i = 0; i < responses.length; i++) {
 								var response = responses[i];

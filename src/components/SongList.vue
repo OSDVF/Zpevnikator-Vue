@@ -29,6 +29,25 @@
 const language = require("@/assets/Czeski.json");
 import { SongProcessing, UIHelpers } from "@/js/Helpers.js";
 import { SongDB } from "@/js/databases/SongDB.js";
+/**
+ * @callback FilterFunction
+ * @param {SongInfo} songInfo
+ * @param {boolean} offline Is the song avaliable offline?
+ * @returns {boolean} Should the item be displayed?
+ */
+/**
+ * @typedef {Object} AdditionalButton
+ * @property {string} title
+ * @property {string} icon
+ * @property {string} class E.g. btn-outline-success
+ * @property {EventHandler} onClick
+ */
+/**
+ * Displays a table of songs from the SongDB
+ * @vue-prop {FilterFunction} filter Pass a filtering function here
+ * @vue-prop {AdditionalButton} additionalButtons Buttons in the 'Action' collumn
+ * @vue-prop {Preferences} preferences Preferences object that says how to compose the table (multipage? with tooltips?)
+ */
 export default {
 	data() {
 		return {
@@ -168,7 +187,7 @@ export default {
 									var actionsTd;
 									if (_class.additionalButtons) {
 										var actionsTd = document.createElement("TD");
-										actionsTd.className="p-0";//No padding
+										actionsTd.className = "p-0"; //No padding
 										for (var btn of _class.additionalButtons) {
 											var newButton = document.createElement("SPAN");
 											newButton.classList.add("btn");
@@ -206,7 +225,7 @@ export default {
 									}
 								}
 								if (cache)
-									cache.match("/api/getsong.php?id=" + value.url + "&nospace=true").then(function(mtch) {
+									cache.match(process.env.VUE_APP_API_URL + "/songs/get.php?id=" + value.url).then(function(mtch) {
 										processRow(mtch, processedEntries);
 									});
 								else processRow(null, processedEntries);

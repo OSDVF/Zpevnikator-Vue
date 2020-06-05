@@ -14,6 +14,11 @@
 </template>
 
 <script>
+/**
+ * List of Groups visible to currently logged user. With nice colors :)
+ * @vue-prop {Array} groups Pass here the array of groups to be displayed
+ * @vue-prop {EventHandler} onItemClick If assigned, the items will be clickable
+ */
 import { SongProcessing } from "@/js/Helpers";
 export default {
 	props: {

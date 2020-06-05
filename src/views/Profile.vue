@@ -133,7 +133,7 @@ export default {
 			this.loginPending = true;
 			this.loginInfoShow = false;
 			var formData = new FormData(event.target);
-			fetch(process.env.VUE_APP_REMOTE_URL + "/api/auth/login.php", {
+			fetch(process.env.VUE_APP_API_URL + "/user/login.php", {
 				method: "POST",
 				body: formData
 			})

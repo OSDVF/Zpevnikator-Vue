@@ -4,14 +4,23 @@ import
 {
     NetworkUtils
 } from '../Helpers';
-import UserStoredInfo from './UserInfo';
-import { fromBase64 } from 'bytebuffer';
 const dbName = process.env.VUE_APP_SONG_DB_NAME
 const buildNumber = process.env.VUE_APP_DB_BUILDNUMBER
 /**
 * @callback databaseResolveCallback
 * @param {IDBObjectStore} store
 */
+/**
+ * @typedef SongInfo
+ * @property url
+ * @property author
+ * @property language
+ * @property imported
+ */
+/**
+ * A song database based on indexedDB
+ * @class
+ */
 const SongDB = {
     eventBus: new Vue(),
     updatingIndex: false,
@@ -19,76 +28,26 @@ const SongDB = {
     onmessage: console.log,
     downloadIndex(callback)
     {
-        this.updatingIndex = true;
         let createIndexTask;
         SongDB.onmessage("Aktualizace indexu písní...", null, 2000);
         this.eventBus.$emit("indexUpdating");
         if (callback)
             $("#songStatus").html("Stahování indexu...");
         createIndexTask = Tasks.AddActive("Stahování seznamu písní", null, "assignment");
-        NetworkUtils.getNoCache(`${process.env.VUE_APP_REMOTE_URL}/api/listsongs.php${UserStoredInfo.ID ? (`?user=${UserStoredInfo.ID}&name=${UserStoredInfo.Name}`) : ''}`).then(response => response.json()).then(songArray =>
+        NetworkUtils.getNoCache(`${process.env.VUE_APP_API_URL}/songs/list.php`).then(response => response.json()).then(songArray =>
         {
-            function executeDBTask(songStore)
-            {
-                let newSongs = 0;
-                let changedSongs = 0;
-                for (let i = 0; i < songArray.length; i++)
-                {
-                    SongDB.updateSong(songStore, songArray[i], ({ isNew, isChanged }) =>
-                    {
-                        if (isNew) newSongs++;
-                        else if (isChanged) changedSongs++;
-                    });
-                }
-                try
-                {
-                    const cRequest = songStore.openCursor();
-                    cRequest.onsuccess = ({ target }) =>
-                    {
-                        const cursor = target.result;
-                        if (cursor)
-                        {
-                            let found = false;
-                            for (let i = 0; i < songArray.length; i++)
-                            {
-                                if (songArray[i].url == cursor.value.url)
-                                {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (!(found || cursor.value.imported || cursor.value.offlineOnly))
-                                cursor.delete()
-                            cursor.continue();
-                        } else
-                        {
-                            if (!(changedSongs || newSongs))
-                                SongDB.onmessage("Již máte aktuální seznam", null, 2000);
-                            SongDB.informAboutChanges(changedSongs, newSongs);
-                            SongDB.updatingIndex = false;
-                        }
-                    }
-                    localStorage.lastIndexDownloaded = Math.floor(Date.now() / 1000) //Timestamp in seconds
-                } catch (e)
-                {
-                    console.warn(e);
-                }
-            }
-            SongDB.write(executeDBTask, null, () =>
+            this.updateIndex(songArray, () =>
             {
                 createIndexTask.completed();
-                SongDB.updatingIndex = false;
                 if (callback) callback();
-                SongDB.eventBus.$emit("indexUpdated");
             }, () =>
             {
                 createIndexTask.failed();
                 const str = "Nepodařilo se uložit databázi";
                 SongDB.onmessage(str, "danger", 2000);
                 createIndexTask.element.find("label").html(str);
-                SongDB.updatingIndex = false;
                 $("#songStatus").html(str);
-            })
+            });
         }).catch(e =>
         {
             console.error(e)
@@ -98,6 +57,69 @@ const SongDB = {
             createIndexTask.element.find("label").html(str);
             $("#songStatus").html(str);
         })
+    },
+    /**
+     * Updates client mirror of the database
+     * @param {SongInfo[]} songArray
+     * @param {Function} onerror
+     * @param {Function} oncomplete
+     */
+    updateIndex(songArray, oncomplete, onerror)
+    {
+        this.updatingIndex = true;
+        function executeDBTask(songStore)
+        {
+            let newSongs = 0;
+            let changedSongs = 0;
+            for (let i = 0; i < songArray.length; i++)
+            {
+                SongDB.updateSong(songStore, songArray[i], ({ isNew, isChanged }) =>
+                {
+                    if (isNew) newSongs++;
+                    else if (isChanged) changedSongs++;
+                });
+            }
+            try
+            {
+                const cRequest = songStore.openCursor();
+                cRequest.onsuccess = ({ target }) =>
+                {
+                    const cursor = target.result;
+                    if (cursor)
+                    {
+                        let found = false;
+                        for (let i = 0; i < songArray.length; i++)
+                        {
+                            if (songArray[i].url == cursor.value.url)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!(found || cursor.value.imported || cursor.value.offlineOnly))
+                            cursor.delete()
+                        cursor.continue();
+                    } else
+                    {
+                        if (!(changedSongs || newSongs))
+                            SongDB.onmessage("Již máte aktuální seznam", null, 2000);
+                        SongDB.informAboutChanges(changedSongs, newSongs);
+                        SongDB.updatingIndex = false;
+                    }
+                }
+                localStorage.lastIndexDownloaded = Math.floor(Date.now() / 1000) //Timestamp in seconds
+            } catch (e)
+            {
+                console.warn(e);
+            }
+        }
+        SongDB.write(executeDBTask, null, () => {
+            SongDB.updatingIndex = false;
+            SongDB.eventBus.$emit("indexUpdated");
+            if (oncomplete) oncomplete()
+        }, () => {
+            if (onerror) onerror()
+        });
     },
     getDB(callback)
     {
@@ -169,6 +191,12 @@ const SongDB = {
             }
         });
     },
+    /**
+     * 
+     * @param {string} id Identifier of the stored SongInfo object
+     * @param {databaseResolveCallback} resolve 
+     * @param {Function} reject 
+     */
     get(id, resolve, reject)
     {
         this.read(songStore =>
@@ -194,6 +222,13 @@ const SongDB = {
             }
         }, reject)
     },
+    /**
+     * Opens a writing pipe to indexedDB
+     * @param {databaseResolveCallback} resolve 
+     * @param {Function} reject 
+     * @param {Function} oncomplete 
+     * @param {Function} onerror 
+     */
     write(resolve, reject, oncomplete, onerror)
     {
         const _this = this;
@@ -232,6 +267,21 @@ const SongDB = {
             }
         });
     },
+    /**
+     * @typedef {Object} UpdateResult
+     * @property {boolean} isChanged The operation changed existing data
+     * @property {boolean} isNew The operation added new item to the database
+     */
+    /**
+     * @callback UpdateResultCallback
+     * @property {UpdateResult} result
+     */
+    /**
+     * Update a single SongInfo item
+     * @param {IDBObjectStore} [songStore] You can supply previously got ObjectStore to speed the process up
+     * @param {SongInfo} songInfo 
+     * @param {UpdateResultCallback} callback 
+     */
     updateSong(songStore, songInfo, callback)
     {
         const result = {
@@ -279,7 +329,7 @@ const SongDB = {
     },
     Inject(cache, songId, contents)
     {
-        const url = `${location.protocol}//${location.host}/api/getsong.php?id=${songId}&nospace=true`;
+        const url = `${process.env.VUE_APP_API_URL}/songs/get.php?id=${songId}`;
         const req = new Request(url);
         const hdr = new Headers();
         hdr.append("Referer", url);

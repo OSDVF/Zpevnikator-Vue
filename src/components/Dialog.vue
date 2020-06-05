@@ -22,6 +22,9 @@
 </template>
 
 <script>
+/**
+ * Internal helper object for displaying dialogs. Use UIHelpers.Dialog() to instantiate one
+ */
 import { UIHelpers } from "../js/Helpers";
 import Settings from '../js/Settings';
 export default {

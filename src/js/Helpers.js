@@ -1,3 +1,7 @@
+/**
+ * @class
+ * @classdesc API for simple network transfer with cache handling
+ */
 const NetworkUtils = {
 	getNoCache: function (uri)
 	{
@@ -25,6 +29,7 @@ const NetworkUtils = {
 		})
 	},
 	/**
+	 * Tries to get the resource from cache with the supplied name first and if it fails, it gets it from the internet
 	 * 
 	 * @param {string} uri 
 	 * @param {string} [cacheName]
@@ -52,6 +57,10 @@ const NetworkUtils = {
 		})
 	}
 }
+/**
+ * @class
+ * @classdesc Manipulate HTML song data
+ */
 const SongProcessing = {
 	anchorsPattern: /\d(?:\)|\.|x|:)|bridge|coda|intro|outro|sloka|mezihra|předehra|dohra|\/:|:\/|refren|refrén|ref:|ref\.:|ref\./gmi,
 	makeRightSequencesBold: function (text)
@@ -201,6 +210,10 @@ const SongProcessing = {
 		return hash;
 	}
 };
+/**
+ * @class
+ * @classdesc Generate files from various data
+ */
 const IOUtils = {
 	CreateTxtBlob: function (txt)
 	{
@@ -224,7 +237,10 @@ const IOUtils = {
 		return Math.random().toString(36).substr(2, length);
 	}
 }
-
+/**
+ * @class
+ * @classdesc Data conversion utilities
+ */
 const DataUtils = {
 	urlB64ToUint8Array(base64String)
 	{
@@ -245,6 +261,11 @@ const DataUtils = {
 	}
 }
 
+/**
+ * @todo Use the Wakelock API instead when it will be available
+ * @class
+ * @classdesc Helper for the NoSleep library
+ */
 const NoSleepHelper = {
 	_nosleep: null,
 	initialize: function ()
@@ -265,6 +286,10 @@ const NoSleepHelper = {
 	}
 }
 
+/**
+ * @class
+ * @classdesc Show various procedural UI elements
+ */
 const UIHelpers = {
 	store: null,
 	dialogResult: null,
@@ -388,7 +413,7 @@ const UIHelpers = {
 			UIHelpers.pendingMessages.pop()();
 	},
 	/**
-	 *  @description Shows message in message area
+	 * @description Shows message in message area
 	 * @param {string} alert Text to display
 	 * @param {string} type Type (success/info/warning/danger)
 	 * @param {number} timeout Time to display the message
@@ -420,6 +445,10 @@ const UIHelpers = {
 	}
 }
 
+/**
+ * @class
+ * @classdesc Get info about user's device and browser
+ */
 const Environment = {
 	isMobile:
 	{
@@ -457,6 +486,17 @@ const Environment = {
 	DarkMode: (window.matchMedia('(prefers-color-scheme: dark)').matches || window.matchMedia('(prefers-dark-interface)'))
 
 }
+/**
+ * @typedef WorkerStates
+ * @parameter dead 0
+ * @parameter ready 1
+ * @parameter registered 2
+ * @parameter downloadingLocal 3
+ * @parameter downloadedLocal 4
+ * @parameter downloadingExternal 5
+ * @parameter downloadedExternal 6
+ * @parameter essential_ok 7
+ */
 const WorkerStates = Object.freeze({ 'dead': 0, 'ready': 1, 'registered': 2, 'downloadingLocal': 3, 'downloadedLocal': 4, 'downloadingExternal': 5, 'downloadedExternal': 6, 'essential_ok': 7 })
 export
 {

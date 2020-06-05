@@ -1,8 +1,12 @@
 //Includes all the global hooks for external scripts which should be executed after DOM load
 
-import { UIHelpers, WorkerStates, Environment } from './Helpers'
+import { UIHelpers, Environment } from './Helpers'
 import Tasks from './Tasks'
 var pendingReady = [];
+/**
+ * @class
+ * @classdesc Global object that holds application-wide resources
+ */
 const manager = {
     /**
      * @type Vue
@@ -13,11 +17,19 @@ const manager = {
         this._vue = to;
         UIHelpers.store = to.$store;
     },
+    /**
+     * Return global application instance
+     */
     get Vue()
     {
         return this._vue;
     },
-    resourcesReady: function (context, callback)
+    /**
+     * Call the callback with 'this' set to context when the document is ready
+     * @param {object} context 
+     * @param {Function} callback 
+     */
+    resourcesReady(context, callback)
     {
         if (typeof $ !== 'undefined' && $.isReady)
             callback.call(context);
@@ -26,10 +38,17 @@ const manager = {
     setupSWMessageBus: setupSWMessageBus,
     workerReadyWaiting: [],
     registerSync: registerSync,
+    /**
+     * Navigate global router to that url
+     * @param {string} url 
+     */
     navigate(url)
     {
         this._vue.$router.push(url);
     },
+    /**
+     * Prompt the PWA install dialog
+     */
     appDownload()
     {
         if (Environment.InsidePwa)

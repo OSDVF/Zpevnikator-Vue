@@ -122,7 +122,7 @@ export default {
 	},
 	mounted() {
 		globalManager.resourcesReady(this, () => {
-			NetworkUtils.getNoCache(process.env.VUE_APP_REMOTE_URL + "/api/likeme.php").then(async function(response) {
+			NetworkUtils.getNoCache(process.env.VUE_APP_API_URL + "/telemetry/like.php").then(async function(response) {
 				$("#starNum").text(await response.text());
 			});
 			var duration = 1700;
@@ -152,7 +152,7 @@ export default {
 		addStar: function() {
 			localStorage.getItem(settingsPrefix + "likeCount") ? localStorage[settingsPrefix + "likeCount"]++ : (localStorage[settingsPrefix + "likeCount"] = 1);
 			if (localStorage[settingsPrefix + "likeCount"] < 4) {
-				fetch("api/likeme.php", { method: "POST" });
+				fetch(vue.app.VUE_APP_API_URL+"/telemetry/like.php", { method: "POST" });
 				$("#starNum").text(parseInt($("#starNum").text()) + 1);
 			} else {
 				message("Zas to s tím lajkováním moc nepřehánějte 😁", null, 3000);

@@ -181,8 +181,8 @@ export default {
 					$("#specialStateLabel").html("Jen v offline databázi");
 				}
 
-				this.info.adminUrl = process.env.VUE_APP_REMOTE_URL + "/api/go.php?cache=false&edit=" + url;
-				const fetchUri = process.env.VUE_APP_REMOTE_URL + "/api/getsong.php?id=" + url + "&nospace=true";
+				this.info.adminUrl = process.env.VUE_APP_API_URL + "/shared/go.php?cache=false&edit=" + url;
+				const fetchUri = process.env.VUE_APP_API_URL + "/songs/get.php?id=" + url;
 
 				try {
 					var response = forceFetch ? await NetworkUtils.getNoCache(fetchUri) : await NetworkUtils.CacheOrNetwork(fetchUri);
@@ -262,7 +262,7 @@ export default {
 				null,
 				() => {
 					var deletFromCache = caches.open(process.env.VUE_APP_SONG_DB_NAME).then(cache => {
-						return cache.delete("/api/getsong.php?id=" + this.songInfo.url + "&nospace=true").then(response => {
+						return cache.delete(process.env.VUE_APP_API_URL+"/songs/get.php?id=" + this.songInfo.url).then(response => {
 							if (response) return Promise.resolve();
 							else return Promise.reject();
 						});

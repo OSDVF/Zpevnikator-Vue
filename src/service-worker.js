@@ -1,4 +1,7 @@
 "use strict";
+/**
+ * @namespace ServiceWorker
+ */
 importScripts("version.js");
 const cacheName = `extended-${version}`;
 const extraDownloadedCacheName = `extra-${version}`;
@@ -120,6 +123,7 @@ var localCompleted = () => lc = true;
  * Downloads the most essential files into cache with name of [essentialCache] variable
  * @param {boolean} noCache Perform no-cache requests
  * @returns {Promise} Promise that resolves when completed
+ * @memberof ServiceWorker
  */
 function precacheEssential(noCache)
 {
@@ -445,7 +449,7 @@ function fetch_it(event)
                     return cache.match(new Request(location.origin + "/not_available.php"));
                 else if (uri.endsWith('.webp') || uri.endsWith('.png') || uri.endsWith('.jpg'))
                     return cache.match(new Request(location.origin + "/images/not_available.png"));
-                else if (!uri.endsWith('.js') && !uri.endsWith('.css') && uri.includes(base) && !uri.includes('/api/'))
+                else if (!uri.endsWith('.js') && !uri.endsWith('.css') && uri.includes(base) && !uri.includes('api.'))
                     return cache.match(new Request(location.origin + "/not_available"));//When retrieving as a normal page
                 else return reject;
             });
