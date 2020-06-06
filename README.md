@@ -1,4 +1,4 @@
-<h1 style='text-align:center'><img src="http://chvaly.dorostmladez.cz/images/icon-32.png" /> Dorostomládežový Zpěvníkátor</h1>
+<h1 style='text-align:center'><img src="http://chvaly.dorostmladez.cz/images/icon-32.png" crossorigin="anonymous"/> Dorostomládežový Zpěvníkátor</h1>
 
 ![Integration](https://github.com/OSDVF/Zpevnikator-Vue/workflows/Integration/badge.svg)
 

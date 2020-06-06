@@ -44,8 +44,8 @@ import { SongDB } from "@/js/databases/SongDB.js";
  */
 /**
  * Displays a table of songs from the SongDB
- * @vue-prop {FilterFunction} filter Pass a filtering function here
- * @vue-prop {AdditionalButton} additionalButtons Buttons in the 'Action' collumn
+ * @vue-prop {FilterFunction} [filter] Pass a filtering function here
+ * @vue-prop {AdditionalButton} [additionalButtons] Buttons in the 'Action' collumn
  * @vue-prop {Preferences} preferences Preferences object that says how to compose the table (multipage? with tooltips?)
  */
 export default {
@@ -56,12 +56,17 @@ export default {
 	},
 	props: {
 		filter: {
-			type: Function
+			type: Function,
+			requred: false
 		},
 		additionalButtons: {
-			type: Array
+			type: Array,
+			requred: false
 		},
-		preferences: Object
+		preferences: {
+			type: Object,
+			required: true
+		}
 	},
 	mounted() {
 		const _class = this;

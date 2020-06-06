@@ -244,6 +244,11 @@ var Settings = {
 	_preferences: new Preferences(),
 	_songCustomization: new SongCustomization(),
 	Customization:SongCustomization,
+	/**
+	 * Used to mark localStorage fields which we don't want to delete when downloading a new version of the application
+	 * @type {string}
+	 * @default
+	 */
 	KeyPrefix: 'pref-',
 	/**
 	 * Changes application theme to dark/light

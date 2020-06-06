@@ -59,7 +59,7 @@ const SongDB = {
         })
     },
     /**
-     * Updates client mirror of the database
+     * Updates the client mirror of the database
      * @param {SongInfo[]} songArray
      * @param {Function} onerror
      * @param {Function} oncomplete

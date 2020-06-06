@@ -22,11 +22,12 @@
 </template>
 
 <script>
+import { UIHelpers } from "../js/Helpers";
+import Settings from "../js/Settings";
 /**
  * Internal helper object for displaying dialogs. Use UIHelpers.Dialog() to instantiate one
+ * @vue-prop {string|HTMLElement} text Can contain text to display or a element to paste (not copy!) into the body of the dialog
  */
-import { UIHelpers } from "../js/Helpers";
-import Settings from '../js/Settings';
 export default {
 	data() {
 		return {
@@ -39,10 +40,9 @@ export default {
 			preferences: this.$parent.preferences
 		};
 	},
-	computed:{
-		dark()
-		{
-			return this.preferences.Theme == 'dark';
+	computed: {
+		dark() {
+			return this.preferences.Theme == "dark";
 		}
 	},
 	props: {
@@ -50,17 +50,17 @@ export default {
 		footer: String,
 		text: Object,
 		type: {
-			type:String,
-			validator: (val) => ['top', 'right', 'bottom', 'left'].includes(val),
-			default:null
+			type: String,
+			validator: val => ["top", "right", "bottom", "left"].includes(val),
+			default: null
 		},
 		ok: {
-			type:String,
-			default:'OK'
+			type: String,
+			default: "OK"
 		},
 		cancel: {
-			type:String,
-			default:'Zrušit'
+			type: String,
+			default: "Zrušit"
 		}
 	},
 	created() {
@@ -69,8 +69,8 @@ export default {
 	},
 	methods: {
 		setData(text, callback, type, header, footer, positiveEventListener) {
-			if(typeof text == "string") this.textData = text;
-			else if(text instanceof Node) this.$refs.innerContent.append(text);
+			if (typeof text == "string") this.textData = text;
+			else if (text instanceof Node) this.$refs.innerContent.append(text);
 			this.click = callback;
 			this.typeData = type;
 			this.headerData = header;

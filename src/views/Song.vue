@@ -1,5 +1,5 @@
 <template>
-  <main class="container">
+  <main class="songPage">
     <div class="float-md-right">
       <div class="text-secondary font-weight-bold mr-lg-5" v-if='transpositionInfo.length'>Transponováno o {{transpositionInfo>0?('+'+transpositionInfo):transpositionInfo}}</div>
     </div>
@@ -262,7 +262,7 @@ export default {
 				null,
 				() => {
 					var deletFromCache = caches.open(process.env.VUE_APP_SONG_DB_NAME).then(cache => {
-						return cache.delete(process.env.VUE_APP_API_URL+"/songs/get.php?id=" + this.songInfo.url).then(response => {
+						return cache.delete(process.env.VUE_APP_API_URL + "/songs/get.php?id=" + this.songInfo.url).then(response => {
 							if (response) return Promise.resolve();
 							else return Promise.reject();
 						});
@@ -465,5 +465,9 @@ export default {
 }
 #songWrapper.no-chords p {
 	padding-bottom: 0.3rem;
+}
+main.songPage {
+	padding-left: calc(var(--mainMargin) * -1);
+	padding-right: calc(var(--mainMargin) * -1);
 }
 </style>

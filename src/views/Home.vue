@@ -100,7 +100,8 @@
 <script>
 // @ is an alias to /src
 import globalManager from "@/js/global";
-import { NetworkUtils } from "@/js/Helpers";
+import { NetworkUtils, UIHelpers } from "@/js/Helpers";
+import Settings from "@/js/Settings";
 export default {
 	name: "home",
 	data() {
@@ -150,12 +151,12 @@ export default {
 	},
 	methods: {
 		addStar: function() {
-			localStorage.getItem(settingsPrefix + "likeCount") ? localStorage[settingsPrefix + "likeCount"]++ : (localStorage[settingsPrefix + "likeCount"] = 1);
-			if (localStorage[settingsPrefix + "likeCount"] < 4) {
-				fetch(vue.app.VUE_APP_API_URL+"/telemetry/like.php", { method: "POST" });
+			localStorage.getItem(Settings.KeyPrefix + "likeCount") ? localStorage[Settings.KeyPrefix + "likeCount"]++ : (localStorage[Settings.KeyPrefix + "likeCount"] = 1);
+			if (localStorage[Settings.KeyPrefix + "likeCount"] < 4) {
+				fetch(process.env.VUE_APP_API_URL+"/telemetry/like.php", { method: "POST" });
 				$("#starNum").text(parseInt($("#starNum").text()) + 1);
 			} else {
-				message("Zas to s tím lajkováním moc nepřehánějte 😁", null, 3000);
+				UIHelpers.Message("Zas to s tím lajkováním moc nepřehánějte 😁", null, 3000);
 			}
 		}
 	},

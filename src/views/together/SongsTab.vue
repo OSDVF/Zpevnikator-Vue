@@ -1,6 +1,7 @@
 <template>
   <div class="likeMain">
     <SongList :filter="filterMySongs" :preferences="$parent.$parent.preferences" :additionalButtons="shareButton" />
+	<ReloadBtn @click="refreshListClicked" shifted-up/>
 
 	<div class="d-none" ref="groupsList">
 		<groups-list :groups="$parent.groups" :onItemClick="shareToGroup"/>
@@ -12,6 +13,7 @@
 import GroupsListVue from "../../components/GroupsList.vue";
 import SongList from "@/components/SongList";
 import { UIHelpers } from '../../js/Helpers';
+import FloatingActionButton from '@/components/FloatingActionButton';
 
 export default {
 	created() {
@@ -30,7 +32,8 @@ export default {
 	},
 	components: {
 		SongList: SongList,
-		GroupsList: GroupsListVue
+		GroupsList: GroupsListVue,
+		ReloadBtn: FloatingActionButton
 	},
 	methods: {
 		filterMySongs(songInfo, offl) {
@@ -39,6 +42,9 @@ export default {
 		shareToGroup(groupInfo)
 		{
 			console.log(groupInfo);
+		},
+		refreshListClicked() {
+			SongDB.downloadIndex(this.$refs.songList.updateTable);
 		}
 	}
 };

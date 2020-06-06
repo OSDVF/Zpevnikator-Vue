@@ -1,7 +1,7 @@
 <template>
   <main class="container">
     <div class="p">
-      <button class="btn btn-secondary pwa-d-none mb-2" onclick="checkState(false,true)">Stáhnout offline</button>
+      <button class="btn btn-secondary pwa-d-none mb-2 mr-2" @click="appDownload">Stáhnout offline</button>
       <button class="btn btn-light mb-2" @click="updateIndex">Aktualizovat index písní</button>&ensp;
       <a data-toggle="collapse" href="#moreOptions">Více...</a>
       <p class="collapse" id="moreOptions">
@@ -40,7 +40,7 @@
             <i class="material-icons rotating d-none" id="songProgressCircle">autorenew</i>
           </span>
           <br style="clear:both" />
-          <span class="text-warning" >{{songDownloadStatus}}</span>
+          <span class="text-warning">{{songDownloadStatus}}</span>
         </div>
       </div>
     </div>
@@ -51,7 +51,7 @@
       <br />
       <span class="text-muted typography-caption">- nebo -</span>
       <br />
-      <button class="btn btn-secondary mt-2" id="exportButton" @click="dlg">Zálohovat stažené do souboru</button>
+      <button class="btn btn-secondary mt-2" @click="exportSongs">Zálohovat stažené do souboru</button>
     </div>
     <h4 class="pwa-d-none">Je možné stáhnout apliakci?</h4>
     <h4 class="d-none pwa-d-initial">Váš systém</h4>
@@ -162,6 +162,7 @@
 <script>
 import { Environment, UIHelpers, SongProcessing, WorkerStates } from "../js/Helpers";
 import { SongDB } from "../js/databases/SongDB";
+import globalManager from "@/js/global";
 export default {
 	data() {
 		return {
@@ -170,7 +171,7 @@ export default {
 			browserDetected: false,
 			verdictClass: "text-primary",
 			allSongsDown: true,
-			songDownloadStatus:null
+			songDownloadStatus: null
 		};
 	},
 	created() {
@@ -179,7 +180,6 @@ export default {
 	},
 	mounted() {
 		"use strict";
-		//checkState(true); //Without download
 		var fileInput = document.getElementById("inputFile");
 		var importButton = document.getElementById("importButton");
 		const mess = "<span class='text-success'>&nbsp;(Váš případ)</span>";
@@ -234,11 +234,17 @@ export default {
 		}
 	},
 	methods: {
-		exportSong() {
+		appDownload() {
+			this.checkState();
+		},
+		checkState() {
+			globalManager.registerSync("queryState");
+		},
+		exportSongs() {
 			var songsArray = [];
 			caches.open(process.env.VUE_APP_SONG_DB_NAME).then(function(cache) {
 				return cache.keys().then(function(keys) {
-					cache.matchAll(process.env.VUE_APP_API_URL+"/songs/get.php", { ignoreSearch: true }).then(function(responses) {
+					cache.matchAll(process.env.VUE_APP_API_URL + "/songs/get.php", { ignoreSearch: true }).then(function(responses) {
 						return SongDB.read(function(songStore) {
 							for (let i = 0; i < responses.length; i++) {
 								var response = responses[i];
@@ -314,7 +320,7 @@ export default {
 				"Bude smazán index písní a všechny offline písně včetně rozepsaných a nepublikovaných. Poté je můžete stáhnou znovu nebo importovat ze souborů.",
 				function(res) {
 					if (res == "yes") {
-						caches.delete(songCache);
+						caches.delete(process.env.VUE_APP_SONG_DB_NAME);
 						function fReload() {
 							location.reload(true);
 						}
@@ -418,7 +424,7 @@ export default {
 
 									if (countRequest.result !== 0 && keys.length >= countRequest.result) this.allSongsDown = true;
 									else if (!onlyInfo && navigator.onLine && diff > 86400) {
-										this.updateIndex(()=>this.checkDownloadedSongs(true));
+										this.updateIndex(() => this.checkDownloadedSongs(true));
 									}
 									this.songDownloadStatus = "Staženo " + keys.length + "/" + countRequest.result + " písní";
 								};

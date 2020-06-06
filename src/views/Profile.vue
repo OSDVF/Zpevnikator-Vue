@@ -66,6 +66,7 @@ import GroupsTab from "./together/GroupsTab";
 import SettingsTab from "./together/SettingsTab";
 import SongsTab from "./together/SongsTab";
 import PlaylistsTab from "./together/PlaylistsTab";
+import { UIHelpers } from "../js/Helpers";
 
 const loginFailed = "Přihlášení pomocí těchto údajů se nezdařilo!";
 export default {
@@ -133,7 +134,7 @@ export default {
 			this.loginPending = true;
 			this.loginInfoShow = false;
 			var formData = new FormData(event.target);
-			fetch(process.env.VUE_APP_API_URL + "/user/login.php", {
+			fetch(process.env.VUE_APP_API_URL + "/users/login.php", {
 				method: "POST",
 				body: formData
 			})
@@ -143,12 +144,20 @@ export default {
 						.then(response => {
 							if (response.status === "OK") {
 								SongDB.DeleteUserSpecificSongs(() => {
-									SongDB.downloadIndex(() => {
-										this.loginPending = false;
-										this.loginInfoShow = false;
-										this.$store.commit("logItIn", { id: response.id, credentials: response.data, name: this.typedUsername });
-										this.$nextTick(this.whileLogged);
-									});
+									this.loginPending = false;
+									this.loginInfoShow = false;
+									this.$store.commit("logItIn", { id: response.id, credentials: response.credentials, name: this.typedUsername });
+									SongDB.updateIndex(
+										response.songs,
+										() => {
+											UIHelpers.Message("Přihlášeno úspěšně");
+										},
+										() => {
+											UIHelpers.Message("Přihlášení se nezdařilo", "danger");
+										}
+									);
+
+									this.$nextTick(this.whileLogged); //Show tab layout as soon as the data are available
 								});
 								console.info("Login succesfull");
 

@@ -3,10 +3,11 @@
  * @namespace ServiceWorker
  */
 importScripts("version.js");
-const cacheName = `extended-${version}`;
+const externalCacheName = `external-${version}`;
 const extraDownloadedCacheName = `extra-${version}`;
-const essentialCache = `essentials-${version}`;
+const internalCacheName = `internal-${version}`;
 const songCache = "songs";
+const getSongUrl = "songs/get";
 const base = location.host;
 var pendingDBRequests = [];
 var pendingOnLoad = [];
@@ -59,7 +60,7 @@ function notifyPageLoad()
     pendingOnLoad.forEach(function (action) { action() });
     pendingOnLoad = [];
 }
-var precaching = false;
+var precachingInternal = false;
 var extendedPrecaching = false;
 var afterprecaching = [];
 var precachedExtended = false;
@@ -69,7 +70,7 @@ if (navigator.onLine)
     forceReloadNextTime = true;
 function whenIsprecaching(callback)
 {
-    if (precaching == true)
+    if (precachingInternal == true)
     {
         callback();
         return;
@@ -77,7 +78,14 @@ function whenIsprecaching(callback)
     afterprecaching.push(callback);
 }
 
-function cacheSeriallyUnlessExists(urls, cache, noCache)
+/**
+ * Stores all urls from the array into the provided cache
+ * @param {string[]} urls 
+ * @param {CacheStorage} cache Cache Storage to save the items into
+ * @param {boolean} noCacheRequest Make all request get fresh data
+ * @memberof ServiceWorker
+ */
+function cacheSeriallyUnlessExists(urls, cache, noCacheRequest)
 {
     var lastUrlPromise = Promise.resolve();
     var numberOfFetched = 0;
@@ -98,7 +106,7 @@ function cacheSeriallyUnlessExists(urls, cache, noCache)
                 {
                     return lastUrlPromise = lastUrlPromise.then(() =>
                     {
-                        return fetch(url, { cache: (noCache ? "no-cache" : "default") }).then(function (response)
+                        return fetch(url, { cache: (noCacheRequest ? "no-cache" : "default") }).then(function (response)
                         {
                             if (response.ok)
                             {
@@ -122,40 +130,54 @@ var localCompleted = () => lc = true;
 /**
  * Downloads the most essential files into cache with name of [essentialCache] variable
  * @param {boolean} noCache Perform no-cache requests
+ * @param {boolean} [informClient=true] Post notification messages to active client
  * @returns {Promise} Promise that resolves when completed
  * @memberof ServiceWorker
  */
-function precacheEssential(noCache)
+function precacheInternal(noCache, informClient = true)
 {
-    var message = {};
-    message.actualState = WorkerStates.downloadingLocal;
-    message.messageType = "caching_state_changed";
-    postMessageToClient(message);
-    precaching = true;
-    return caches.open(essentialCache).then(function (cache)
+    precachingInternal = true;
+    if (informClient)
     {
+        var message = {};
+        actualState = WorkerStates.downloadingLocal;
+        message.actualState = actualState;
+        message.messageType = "caching_state_changed";
+        message.from = "precacheEssential"
+        postMessageToClient(message);
+    }
+    return caches.open(internalCacheName).then(function (cache)
+    {
+        __precacheManifest.push('/');//Also cache the main page
         return cacheSeriallyUnlessExists(__precacheManifest/*will be injected*/, cache, noCache).then(function (numberOfFetched)
         {
-            var message = {};
-            if (numberOfFetched > 0)
+            if (informClient)
             {
-                message.actualState = WorkerStates.downloadedLocal;
-                message.messageType = "caching_state_changed";
-                postMessageToClient(message);
-            }
-            else if (numberOfFetched == -1)
-            {
-                message.actualState = WorkerStates.essential_ok;
-                message.messageType = "caching_state_changed";
-                postMessageToClient(message);
+                var message = {};
+                if (numberOfFetched > 0)
+                {
+                    actualState = WorkerStates.downloadedLocal;
+                    message.actualState = actualState;
+                    message.messageType = "caching_state_changed";
+                    message.from = "precacheEssential"
+                    postMessageToClient(message);
+                }
+                else if (numberOfFetched == -1)
+                {
+                    actualState = WorkerStates.essential_ok;
+                    message.actualState = actualState;
+                    message.messageType = "caching_state_changed";
+                    message.from = "precacheEssential"
+                    postMessageToClient(message);
+                }
             }
             afterprecaching.forEach(function (clb) { clb() });
             precachedEssential = true;
-            precaching = false;
+            precachingInternal = false;
         }).catch(() =>
         {
             precachedEssential = false;
-            precaching = false;
+            precachingInternal = false;
         });
     })
 }
@@ -168,43 +190,43 @@ const cdnUrls = [
     "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.2.0/js.cookie.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/css/bootstrap-select.min.css",
-    "https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"
+    "https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js",
+    "https://fonts.googleapis.com/icon?family=Material+Icons"
+
 ];
-function precache(noCache)
+function precacheExternal(informClient = true)
 {
     extendedPrecaching = true;
-    return caches.open(cacheName).then(function (cache)
+    return caches.open(externalCacheName).then(function (cache)
     {
-        var message = {};
-        message.actualState = WorkerStates.downloadingExternal;
-        message.messageType = "caching_state_changed";
-        postMessageToClient(message);
+        if (informClient)
+        {
+            var message = {};
+            actualState = WorkerStates.downloadingExternal;
+            message.actualState = actualState;
+            message.messageType = "caching_state_changed";
+            message.from = "precacheExternal"
+            postMessageToClient(message);
+        }
 
         //Cache all CDN urls at once, improving total install time of event handler
         var cdnUrlsPromise = cache.addAll(cdnUrls);
-        cdnUrlsPromise.then(() => { console.log("All CDN urls succesfully cached!") });
-
-        //Because of injected Rocket Loader Javascript and its CDN not supporting CORS, its required to fake-cache nothing
-        var nothinBlob = new Blob();
-        var init = { "status": 200, "statusText": "OK" };
-        var rocketLoaderBlankResponse = new Response(nothinBlob, init);
-        var rocketLoaderPromise = cache.put("https://ajax.cloudflare.com/cdn-cgi/scripts/2448a7bd/cloudflare-static/rocket-loader.min.js", rocketLoaderBlankResponse);
-
-        rocketLoaderPromise.then(() =>
-        {
-
-            console.log("Rocket loader succesfully \"cached\"")
-        });
 
         //Wait for all cache operations and then return
-        return Promise.all([cdnUrlsPromise, rocketLoaderPromise]).then(() =>
+        return cdnUrlsPromise.then(() =>
         {
-            var message = {};
-            message.actualState = WorkerStates.downloadedExternal;
-            message.messageType = "caching_state_changed";
+            console.log("All CDN urls succesfully cached!")
+            if (informClient)
+            {
+                var message = {};
+                actualState = WorkerStates.downloadedExternal;
+                message.actualState = actualState;
+                message.messageType = "caching_state_changed";
+                message.from = "precacheExternal"
+                postMessageToClient(message);
+            }
             precachedExtended = true;
             extendedPrecaching = false;
-            postMessageToClient(message);
             self.skipWaiting();
 
             return Promise.resolve();
@@ -212,13 +234,14 @@ function precache(noCache)
         {
             precachedExtended = false;
             extendedPrecaching = false;
+            return Promise.reject();
         });
     })
 }
 
 self.addEventListener('install', e =>
 {
-    const cacheWhitelist = [cacheName, extraDownloadedCacheName, essentialCache, songCache];
+    const cacheWhitelist = [externalCacheName, extraDownloadedCacheName, internalCacheName, songCache];
     var downloadNew = false;
     e.waitUntil(caches.keys().then(function (keyList)
     {
@@ -237,18 +260,20 @@ self.addEventListener('install', e =>
         {
             if (downloadNew)
             {
-                precachedEssential = precachedExtended = precaching = extendedPrecaching = false;
-                precacheEssential(true).then(() => precache(true).then(() =>
+                precachedEssential = precachedExtended = precachingInternal = extendedPrecaching = false;
+                precacheInternal(true, false).then(() => precacheExternal(false).then((() =>
                 {
                     postMessageToClient({ messageType: "html-snackbar", html: "<div class=\"snackbar-body\">Nová verze stáhnuta&ensp;</div><button class=\"btn btn-outline-secondary btn-fluid p-2\" type=\"button\" onclick=\"location.reload('true');\">Instalovat</button>", multiline: true, timeout: 10000 })
-                    self.skipWaiting();
-                    self.clients.claim()
-                }))
+                })))
             }
         }).then(() =>
         {
-            if (!precaching && !precachedEssential)
-                precacheEssential().then(() => self.clients.claim());//Pro jistotu
+            if (!precachingInternal && !precachedEssential)
+                precacheInternal().then(() =>
+                {
+                    self.skipWaiting();
+                    self.clients.claim()
+                });//Pro jistotu
         })
     }));
 });
@@ -279,48 +304,20 @@ function firstPromiseResolve(array)
         });
     });
 }
-const alwaysIgnoreQuery = [
-    "/song",
-    "/converted",
-    "/editorTest",
-    "/editor"
-]
+/**
+ * 
+ * @param {FetchEvent} event 
+ */
 function fetch_it(event)
 {
     let request = event.request;
     let uri = request.url;
     var navigating = request.mode == "navigate";
     let forceReload = false;
-    let ignoreSrch = false;
 
-    for (var fragment of alwaysIgnoreQuery)
-    {
-        if (uri.includes(fragment))
-        {
-            ignoreSrch = true;
-            break;
-        }
-    }
-    if (chromeVersion < 49 && uri.includes("/song?"))
-    {
-        uri = uri.substring(0, uri.indexOf("?"));
-        request = new Request(uri, { headers: request.headers, cache: request.cache, credentials: request.credentials, integrity: request.integrity, method: request.method, mode: request.mode, redirect: request.redirect, referrer: request.referrer, referrerPolicy: request.referrerPolicy });
-    }
-
-    /*if(uri.indexOf("%b%") > 0)
-        {
-            uri = uri.replace("%b%",base);
-            request = new Request(uri,{headers:request.headers,cache:request.cache,credentials: request.credentials, integrity:request.integrity,method:request.method,mode: request.mode,redirect:request.redirect,referrer:request.referrer,referrerPolicy:request.referrerPolicy});
-        }*/
-    if (uri == "https://ajax.cloudflare.com/cdn-cgi/scripts/2448a7bd/cloudflare-static/rocket-loader.min.js")
-    {
-        var nothinBlob = new Blob();
-        var init = { "status": 200, "statusText": "OK" };
-        event.respondWith(new Response(nothinBlob, init));
-        return;
-    }
     if (navigating)
     {
+        uri = uri.replace(location.origin, "");
         if (forceReloadNextTime)
         {
             onNextPageLoad(() => { postMessageToClient({ messageType: "forceReloaded" }); forceReloadNextTime = false });
@@ -339,19 +336,12 @@ function fetch_it(event)
                 function (fetchResponse)
                 {
                     // Check if we received a valid response
-                    if (fetchResponse.status == 404 && request.headers.get('X-Requested-With') == "swup")
-                    {
-                        return fetchResponse.text().then(function (text)
-                        {
-                            return new Response(new Blob([text], { type: "text/html;charset=UTF-8" }));
-                        })
-                    }
-                    if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic' || request.method === 'POST' ||
+                    if (!fetchResponse || fetchResponse.status !== 200 || request.method === 'POST' ||
                         request.headers.get('Cache-Control') == 'no-store' || uri.includes("cache=false"))
                     {
                         return Promise.resolve(fetchResponse);
                     }
-                    if (uri.includes("getsong.php?"))
+                    if (uri.includes(getSongUrl))
                         return caches.open(songCache).then(function (cache)
                         {
                             var responseToCache = fetchResponse.clone();
@@ -370,7 +360,7 @@ function fetch_it(event)
                             {
                                 return caches.open(key2).then(function (checkingCache)
                                 {
-                                    return checkingCache.match(uri, { ignoreSearch: ignoreSrch }).then(function (cacheInfo1)
+                                    return checkingCache.match(uri, { ignoreSearch: navigating }).then(function (cacheInfo1)
                                     {
                                         if (cacheInfo1 != undefined)
                                             return Promise.resolve({ inf: cacheInfo1, cacheName: key2 });
@@ -382,10 +372,7 @@ function fetch_it(event)
                                 return caches.open(result.cacheName).then(function (cache)
                                 {
                                     var responseToCache = fetchResponse.clone();
-                                    if (ignoreSrch)
-                                        cache.put(new URL(uri).pathname, responseToCache);
-                                    else
-                                        cache.put(result.inf.url, responseToCache);
+                                    cache.put(result.inf.url, responseToCache);
                                     return Promise.resolve(fetchResponse);
                                 });
                             }).catch(() =>
@@ -393,10 +380,7 @@ function fetch_it(event)
                                 return caches.open(extraDownloadedCacheName).then(function (cache)
                                 {
                                     var responseToCache = fetchResponse.clone();
-                                    if (ignoreSrch)
-                                        cache.put(new URL(uri).pathname, responseToCache);
-                                    else
-                                        cache.put(uri, responseToCache);
+                                    cache.put(uri, responseToCache);
                                     return Promise.resolve(fetchResponse);
                                 });
                             }).catch(function (errorArray)
@@ -408,7 +392,7 @@ function fetch_it(event)
                 });
         };
         var cachePromise;
-        if (uri.includes("getsong.php?"))
+        if (uri.includes(getSongUrl))
         {
             cachePromise = caches.open(songCache).then(function (cache)
             {
@@ -427,7 +411,7 @@ function fetch_it(event)
             });
         }
         else
-            cachePromise = caches.match(uri, { ignoreSearch: ignoreSrch })
+            cachePromise = caches.match(uri, { ignoreSearch: navigating })
                 .then(function (response)
                 {
                     if (!response)
@@ -443,18 +427,13 @@ function fetch_it(event)
 
         function fallbackPromise()
         {
-            caches.open(essentialCache).then(function (cache)
+            caches.open(internalCacheName).then(function (cache)
             {
-                if (event.request.headers.get('X-Requested-With') == 'SongFetch')//When retrieving as a song(probably)
-                    return cache.match(new Request(location.origin + "/not_available.php"));
-                else if (uri.endsWith('.webp') || uri.endsWith('.png') || uri.endsWith('.jpg'))
+                if (uri.endsWith('.webp') || uri.endsWith('.png') || uri.endsWith('.jpg'))
                     return cache.match(new Request(location.origin + "/images/not_available.png"));
-                else if (!uri.endsWith('.js') && !uri.endsWith('.css') && uri.includes(base) && !uri.includes('api.'))
-                    return cache.match(new Request(location.origin + "/not_available"));//When retrieving as a normal page
                 else return reject;
             });
         }
-        let reloaded = false;
         if (request.method === 'POST')
         {
             return fetchPromise().catch(() => fallbackPromise());
@@ -479,9 +458,9 @@ function fetch_it(event)
         {
             return cachePromise.catch(() => fetchPromise().catch(() =>
             {
-                if (!ignoreSrch)
+                if (!navigating)
                 {
-                    ignoreSrch = true;//Try it even if there are no that one with saved query string
+                    navigating = true;//Try it even if there are no that one with saved query string
                     return cachePromise.catch(() => fallbackPromise());
                 }
                 else
@@ -507,24 +486,30 @@ self.addEventListener('message', function (event)
     }
     else if (event.data.tag === 'essential-download')
     {
-        if (!precaching && !precachedEssential)
-            precacheEssential();//Pro jistotu
+        if (!precachingInternal && !precachedEssential)
+            precacheInternal();//Pro jistotu
         else if (precachedEssential)
-            postMessageToClient({ actualState: WorkerStates.downloadedLocal, messageType: "caching_state_changed" });
+        {
+            actualState = WorkerStates.downloadedLocal;
+            postMessageToClient({ actualState: actualState, messageType: "caching_state_changed", from: "messageListener" });
+        }
 
     }
     else if (event.data.tag === 'extended-download')
     {
         if (!extendedPrecaching && !precachedExtended)
-            precache();
+            precacheExternal();
         else if (precachedExtended)
-            postMessageToClient({ actualState: WorkerStates.downloadedExternal, messageType: "caching_state_changed" });
+            {
+                actualState = WorkerStates.downloadedExternal;
+                postMessageToClient({ actualState: actualState, messageType: "caching_state_changed", from: "messageListener" });
+            }
     }
     else if (event.data.tag === 'clean')
     {
-        precachedEssential = precachedExtended = precaching = extendedPrecaching = false;
-        precacheEssential(true).then(() =>
-            precache(true).then(() =>
+        precachedEssential = precachedExtended = precachingInternal = extendedPrecaching = false;
+        precacheInternal(true).then(() =>
+            precacheExternal(true).then(() =>
                 postMessageToClient({ messageType: "reloadPermitted" })
             )
         )
@@ -532,6 +517,10 @@ self.addEventListener('message', function (event)
     else if (event.data.tag === 'skipWaiting')
     {
         self.skipWaiting();
+    }
+    else if (event.data.tag === 'queryState')
+    {
+        postMessageToClient({ actualState: actualState, messageType: "currentState"});
     }
 });
 function postMessageToClient(data, targetClientId)
@@ -597,14 +586,14 @@ self.addEventListener('notificationclick', function (event)
     clients.openWindow("/messages?reply=" + messageId);
   }*/
 }, false);
-if (precaching)
+if (precachingInternal)
     afterprecaching.push(fetch_it);
 else
     self.addEventListener("fetch", fetch_it);
 
 function checkEssential()
 {
-    return caches.open(essentialCache).then(function (cache)
+    return caches.open(internalCacheName).then(function (cache)
     {
         return cache.keys().then(function (keys)
         {
@@ -616,7 +605,7 @@ function checkEssential()
 }
 function checkExtended()
 {
-    return caches.open(extendedCacheName).then(function (cache)
+    return caches.open(externalCacheName).then(function (cache)
     {
         return cache.keys().then(function (keys)
         {
@@ -628,30 +617,26 @@ function checkExtended()
 }
 self.addEventListener('activate', function ()
 {
-    postMessageToClient({ actualState: WorkerStates.ready, messageType: "caching_state_changed" });
+    actualState = WorkerStates.ready;
+    postMessageToClient({ actualState: actualState, messageType: "caching_state_changed", from: "activateListener" });
     function checkState(noDownload, downApp)
     {
         checkEssential().then(function ()
         {
-            postMessageToClient({ actualState: WorkerStates.downloadedLocal, messageType: "caching_state_changed" });
+            actualState = WorkerStates.downloadedLocal;
+            postMessageToClient({ actualState: actualState, messageType: "caching_state_changed", from: "activateListener" });
             checkExtended().then(function ()
             {
-                postMessageToClient({ actualState: WorkerStates.downloadedExternal, messageType: "caching_state_changed" });
-                /*appDownloadButtonEnable();
-                if (insidePwa)
-                {
-                    indicateProgresAlreadyCompleted("#installation");
-                    $("#offlineEnable").hide();
-                }
-                else if (downApp == true)
-                    dialog("Všechny potřebné soubory byly již staženy. Chcete nyní stáhnout aplikaci?", null, DialogType.YesNo, "Instalovat?", null, appDownload);*/
+                actualState = WorkerStates.downloadedExternal;
+                postMessageToClient({ actualState: actualState, messageType: "caching_state_changed", from: "activateListener" });
             })
         }).catch(function (err)
         {
-            console.log("[SW] ",err);
+            console.log("[SW] ", err);
             if (noDownload)
                 return;
-            precacheEssential(true);
+            if (!precachingInternal && !precachedEssential)
+                precacheInternal(true);
         })
 
     }

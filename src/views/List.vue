@@ -6,21 +6,19 @@
         Rozumím
       </button>
     </div>
-    <SongList @offline-songs-exist="offlineInfoDisplay" ref="songList" :preferences="$parent.preferences"/>
-	<div class="fab-right">
-      <button class="btn btn-float btn-secondary m-3" type="button" data-placement="left" data-toggle="tooltip" title="Aktualizovat seznam" @click="refreshListClicked">
-        <i class="material-icons">refresh</i>
-      </button>
-    </div>
+    <SongList @offline-songs-exist="offlineInfoDisplay" ref="songList" :preferences="$parent.preferences" />
+    <ReloadBtn @click="refreshListClicked"/>
   </main>
 </template>
 <script>
 import SongList from "@/components/SongList";
 import { SongDB } from "@/js/databases/SongDB.js";
+import FloatingActionButton from '../components/FloatingActionButton';
+
+var downloadIndexAtStartup = false;
 export default {
 	methods: {
-		offlineInfoDisplay()
-		{
+		offlineInfoDisplay() {
 			document.getElementById("offlineInfo").classList.remove("d-none");
 		},
 		refreshListClicked() {
@@ -28,20 +26,27 @@ export default {
 		}
 	},
 	components: {
-		SongList: SongList
+		SongList: SongList,
+		ReloadBtn: FloatingActionButton
 	},
 	activated() {
 		this.$store.commit("changeTitle", "Písně");
-		var lastListScroll = localStorage.getItem(this.$route.name+"lastListScroll");
+		var lastListScroll = localStorage.getItem(this.$route.name + "lastListScroll");
 		if (lastListScroll)
 			//Restore previous scroll position
 			document.documentElement.scrollTop = lastListScroll;
-		localStorage.removeItem(this.$route.name+"lastListScroll");
-
-		if(performance.navigation.type ==1)//Page was reloaded
-		{
-			this.refreshListClicked();
-		}
+		localStorage.removeItem(this.$route.name + "lastListScroll");
+	},
+	created() {
+		if (downloadIndexAtStartup) this.refreshListClicked();
+	},
+	beforeRouteEnter(to, from, next) {
+		next(vm => {
+			if ((!from || !from.name) && performance.navigation.type == 1) {
+				//Page was reloaded
+				downloadIndexAtStartup = true;
+			}
+		});
 	}
 };
 </script>

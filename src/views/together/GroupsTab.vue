@@ -12,17 +12,14 @@
       </h4>
       <groups-list :groups="ownGroups" />
     </div>
-    <div class="fab-right">
-      <button class="btn btn-float btn-success m-3" type="button" data-placement="left" data-toggle="tooltip" title="Vytvořit skupinu" @click="createGroup">
-        <i class="material-icons">group_add</i>
-      </button>
-    </div>
+    <AddBtn title="Vytvořit skupinu" @click="createGroup" icon="group_add" color="success" shifted-up/>
   </div>
 </template>
 <script>
 import {UIHelpers} from '@/js/Helpers';
 import newGroupDialogHtml from 'raw-loader!./addGroup.html';
 import GroupsListVue from '../../components/GroupsList.vue';
+import FloatingActionButton from '../../components/FloatingActionButton.vue';
 
 export default {
 	data() {
@@ -31,7 +28,8 @@ export default {
 		};
   },
   components:{
-    GroupsList: GroupsListVue
+    GroupsList: GroupsListVue,
+    AddBtn: FloatingActionButton
   },
 	computed: {
 		ownGroups() {
@@ -60,7 +58,7 @@ export default {
 };
 </script>
 <style>
-.fab-right {
+.fab-right.shifted-up {
 	bottom: 50px;
 }
 </style>

@@ -302,7 +302,7 @@ const UIHelpers = {
 		"NoButtonsWeak": 6
 	}),
 	/**
-	 * The complete Triforce, or one or more components of the Triforce.
+	 * Enum for selecting dialog buttons
 	 * @typedef {Object} DialogType
 	 * @property Ok
 	 * @property OkCancel
