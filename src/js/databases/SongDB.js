@@ -268,7 +268,7 @@ const SongDB = {
         });
     },
     /**
-     * @typedef {Object} UpdateResult
+     * @typedef UpdateResult
      * @property {boolean} isChanged The operation changed existing data
      * @property {boolean} isNew The operation added new item to the database
      */

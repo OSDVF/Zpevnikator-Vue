@@ -1,7 +1,7 @@
 <template>
   <main class="container">
     <div class="p">
-      <button class="btn btn-secondary pwa-d-none mb-2 mr-2" @click="appDownload">Stáhnout offline</button>
+      <button class="btn btn-secondary pwa-d-none mb-2 mr-2" @click="appDownload">{{workerState>=6?'Instalovat':'Stáhnout aplikaci'}}</button>
       <button class="btn btn-light mb-2" @click="updateIndex">Aktualizovat index písní</button>&ensp;
       <a data-toggle="collapse" href="#moreOptions">Více...</a>
       <p class="collapse" id="moreOptions">
@@ -11,36 +11,34 @@
     </div>
     <div class="card bg-white fw p mb-4">
       <div class="card-body bg-white">
-        <h5 class="card-title bg-white">Aktuální stav</h5>
+        <h5 class="card-title bg-white">Kroky k instalaci</h5>
       </div>
       <div class="list-group list-group-flush">
-        <span :class="$store.state.workerState>=1?'list-group-item' :'list-group-item disabled'" id="registrated">
+        <span class="list-group-item">
           <i class="material-icons">info</i>&ensp;Registrace v prohlížeči
-          <i class="material-icons rotating d-none loading-icon">autorenew</i>
+          <CheckButton :display="workerState>=2" />
         </span>
-        <span :class="'list-group-item' + ($store.state.workerState>=4?'':' disabled')" id="basic">
-          <i class="material-icons">cloud_download</i>&ensp;Stáhnutí základních souborů
-          <i class="material-icons rotating d-none loading-icon">autorenew</i>
+        <span class='list-group-item'>
+          <i class="material-icons">cloud_download</i>&ensp;Stáhnutí interních souborů
+          <CheckButton :display="workerState>=4" />
         </span>
-        <span :class="'list-group-item' + ($store.state.workerState>=6?'':' disabled')" id="extended">
+        <span class="list-group-item">
           <i class="material-icons">offline_bolt</i>&ensp;Stáhnutí externích souborů
-          <i class="material-icons rotating d-none loading-icon">autorenew</i>
+          <CheckButton :display="workerState>=6" />
         </span>
-        <span :class="'list-group-item' + (insidePwa?'':' disabled')" id="installation">
-          <i class="material-icons">exit_to_app</i>&ensp;Instalace
-          <span class="float-right">
-            <button id="offlineEnable" class="btn btn-outline-secondary" v-if="!insidePwa&&$store.state.workerState>0">{{$store.state.workerState>=6?'Instalovat':'Počkejte prosím...'}}</button>&ensp;
-            <i class="material-icons rotating d-none loading-icon">autorenew</i>
-          </span>
+        <span class='list-group-item'>
+          <i class="material-icons">exit_to_app</i>&ensp;{{insidePwa?"Instalováno!":"Instalace"}}
+          <CheckButton :display="insidePwa" />
         </span>
-        <div :class="'list-group-item' + (allSongsDown?'':' disabled')" id="all_song_download">
+        <div class="list-group-item" id="all_song_download">
           <i class="material-icons">touch_app</i> Stáhnutí písní
           <span class="float-right">
-            <button class="btn btn-outline-secondary" id="songDownloadBtn" onclick="downloadAllSongs()">Stáhnout všechny písně</button>&ensp;
+            <button class="btn btn-outline-secondary" id="songDownloadBtn" @click="downloadAllSongs()">Stáhnout všechny písně</button>&ensp;
             <i class="material-icons rotating d-none" id="songProgressCircle">autorenew</i>
+            <CheckButton :display="downloadedSongs==totalSongs" />
           </span>
           <br style="clear:both" />
-          <span class="text-warning">{{songDownloadStatus}}</span>
+          <span class="text-warning">{{"Staženo " + downloadedSongs + "/" +totalSongs + " písní"}}</span>
         </div>
       </div>
     </div>
@@ -126,13 +124,13 @@
     <h4>Podrobnosti o offline aplikaci</h4>
     <ul>
       <li>
-        <a href="offline-internals">Jak to funguje?</a>
+        <a href="#" @click="showInternalsPage">Jak to funguje?</a>
       </li>
       <li>
-        <a href="offline-internals#pozadavky">Co k tomu potřebuji?</a>
+        <a href="#pozadavky" @click="showInternalsPage">Co k tomu potřebuji?</a>
       </li>
       <li>
-        <a href="offline-internals#faq">Řešení problémů...</a>
+        <a href="#faq" @click="showInternalsPage">Řešení problémů...</a>
       </li>
     </ul>
     <div class="modal fade light" id="manualInstallPrompt" tabindex="-1" role="dialog" aria-labelledby="manualInstallLabel" aria-hidden="true">
@@ -163,6 +161,7 @@
 import { Environment, UIHelpers, SongProcessing, WorkerStates } from "../js/Helpers";
 import { SongDB } from "../js/databases/SongDB";
 import globalManager from "@/js/global";
+import CheckLoadingIconVue from "../components/CheckLoadingIcon.vue";
 export default {
 	data() {
 		return {
@@ -170,13 +169,17 @@ export default {
 			browserVersion: "Neznámá",
 			browserDetected: false,
 			verdictClass: "text-primary",
-			allSongsDown: true,
-			songDownloadStatus: null
+			downloadedSongs: 0,
+			totalSongs: Infinity,
+			workerState: this.$store.state.workerState
 		};
+	},
+	components: {
+		CheckButton: CheckLoadingIconVue
 	},
 	created() {
 		this.version = process.env.VUE_APP_VERSION;
-		this.insidePwa = Environment.InsidePwa;
+		this.insidePwa = Environment.InsidePwa == true;
 	},
 	mounted() {
 		"use strict";
@@ -211,7 +214,7 @@ export default {
 			$(".desktopManual .expansion-panel-icon").prepend(mess);
 		}
 		if (chromeVersion >= 70) {
-			this.detectionResult = "Jupí, u vás není pochybností, že by to nemohlo fungovat!<br>" + "Spustě automatickou instalaci tlačítkem.";
+			this.detectionResult = "Jupí, u vás není pochybností, že by to nemohlo fungovat!<br>" + "Spusťtě automatickou instalaci tlačítkem nahoře.";
 			this.verdictClass = "text-success";
 		} else if (chromeVersion > 67) {
 			this.detectionResult =
@@ -236,15 +239,28 @@ export default {
 	methods: {
 		appDownload() {
 			this.checkState();
+			if(this.workerState >=WorkerStates.downloadedExternal )
+			{
+				globalManager.appDownload();
+			}
 		},
 		checkState() {
 			globalManager.registerSync("queryState");
+			this.checkDownloadedSongs();
+		},
+		showInternalsPage(event) {
+			event.target.href;
+			this.$router.push({ name: "external", params: { url: "http://shared.dorostmladez.cz/pages/offlineInternals.html" } });
 		},
 		exportSongs() {
 			var songsArray = [];
 			caches.open(process.env.VUE_APP_SONG_DB_NAME).then(function(cache) {
 				return cache.keys().then(function(keys) {
 					cache.matchAll(process.env.VUE_APP_API_URL + "/songs/get.php", { ignoreSearch: true }).then(function(responses) {
+						if (!responses.length) {
+							UIHelpers.Message("Nemáte žádné stažené písně", "warning");
+							return;
+						}
 						return SongDB.read(function(songStore) {
 							for (let i = 0; i < responses.length; i++) {
 								var response = responses[i];
@@ -331,6 +347,7 @@ export default {
 				"Chcete pokračovat?"
 			);
 		},
+		downloadAllSongs() {},
 		resetSettings() {
 			UIHelpers.Dialog(
 				"Nastavení aplikace včetně vybrané transpozice písní bude obnoveno na počáteční hodnoty. Offline databáze zůstane zachována.",
@@ -413,23 +430,24 @@ export default {
 		checkDownloadedSongs(onlyInfo) {
 			return caches
 				.open(process.env.VUE_APP_SONG_DB_NAME)
-				.then(function(cache) {
-					return cache.keys().then(function(keys) {
-						return SongDB.read(function(songStore) {
+				.then(cache => {
+					return cache.keys().then(keys => {
+						return SongDB.read(songStore => {
 							if (songStore.keyPath == "url") {
 								var countRequest = songStore.count();
-								countRequest.onsuccess = function() {
+								countRequest.onsuccess = () => {
 									var diff = Infinity;
 									if (localStorage.lastIndexDownloaded) diff = Math.floor(Date.now() / 1000) - localStorage.lastIndexDownloaded;
 
 									if (countRequest.result !== 0 && keys.length >= countRequest.result) this.allSongsDown = true;
 									else if (!onlyInfo && navigator.onLine && diff > 86400) {
-										this.updateIndex(() => this.checkDownloadedSongs(true));
+										SongDB.downloadIndex(() => this.checkDownloadedSongs(true));
 									}
-									this.songDownloadStatus = "Staženo " + keys.length + "/" + countRequest.result + " písní";
+									this.downloadedSongs = keys.length;
+									this.totalSongs = countRequest.result;
 								};
 							} else if (SongDB.requestingDB) {
-								this.updateIndex(this.checkDownloadedSongs);
+								SongDB.downloadIndex(this.checkDownloadedSongs);
 							} //message("Fatální chyba při práci s databází. Vymažte prosím všechna data aplikace","danger",7000,true);
 							else throw "deleteDB";
 						});
@@ -442,6 +460,7 @@ export default {
 	},
 	activated() {
 		this.$store.commit("changeTitle", "Správa aplikace");
+		this.checkState();
 	}
 };
 </script>

@@ -41,10 +41,11 @@ const manager = {
      * Sends a sync-message to the serviceWorker. It is the only communication channel from page->SW
      * @function registerSync
      * @param {*} tag Totaly anything to send to SW
+     * @memberof manager
      */
     registerSync: registerSync,
     /**
-     * Navigate global router to that url
+     * Navigate the global router to that url
      * @param {string} url 
      */
     navigate(url)
@@ -52,7 +53,7 @@ const manager = {
         this._vue.$router.push(url);
     },
     /**
-     * Prompt the PWA install dialog
+     * Shows for the PWA install dialog
      */
     appDownload()
     {

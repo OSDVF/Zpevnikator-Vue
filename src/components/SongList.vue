@@ -36,7 +36,7 @@ import { SongDB } from "@/js/databases/SongDB.js";
  * @returns {boolean} Should the item be displayed?
  */
 /**
- * @typedef {Object} AdditionalButton
+ * @typedef AdditionalButton
  * @property {string} title
  * @property {string} icon
  * @property {string} class E.g. btn-outline-success
@@ -273,7 +273,7 @@ export default {
 		},
 		updateTable() {
 			this.tab.clear();
-			if ("caches" in window && typeof songCache != "undefined") caches.open(songCache).then(this.upd);
+			if ("caches" in window) caches.open(process.env.VUE_APP_SONG_DB_NAME).then(this.upd);
 			else this.upd();
 		},
 		refreshClearables() {

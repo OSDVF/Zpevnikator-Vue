@@ -303,7 +303,7 @@ const UIHelpers = {
 	}),
 	/**
 	 * Enum for selecting dialog buttons
-	 * @typedef {Object} DialogType
+	 * @typedef DialogType
 	 * @property Ok
 	 * @property OkCancel
 	 * @property YesNo
@@ -487,15 +487,16 @@ const Environment = {
 
 }
 /**
+ * Enum. All the possible states of underlying serviceWorker
  * @typedef WorkerStates
- * @parameter dead 0
- * @parameter ready 1
- * @parameter registered 2
- * @parameter downloadingLocal 3
- * @parameter downloadedLocal 4
- * @parameter downloadingExternal 5
- * @parameter downloadedExternal 6
- * @parameter essential_ok 7
+ * @property dead 0
+ * @property ready 1
+ * @property registered 2
+ * @property downloadingLocal 3
+ * @property downloadedLocal 4
+ * @property downloadingExternal 5
+ * @property downloadedExternal 6
+ * @property essential_ok 7
  */
 const WorkerStates = Object.freeze({ 'dead': 0, 'ready': 1, 'registered': 2, 'downloadingLocal': 3, 'downloadedLocal': 4, 'downloadingExternal': 5, 'downloadedExternal': 6, 'essential_ok': 7 })
 export

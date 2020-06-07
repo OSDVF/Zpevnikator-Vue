@@ -12,6 +12,7 @@ const base = location.host;
 var pendingDBRequests = [];
 var pendingOnLoad = [];
 var reject = Promise.reject();
+var actualState = false;
 const WorkerStates = { 'dead': 0, 'ready': 1, 'registered': 2, 'downloadingLocal': 3, 'downloadedLocal': 4, 'downloadingExternal': 5, 'downloadedExternal': 6, 'essential_ok': 7 };
 Object.freeze(WorkerStates);
 
@@ -305,8 +306,9 @@ function firstPromiseResolve(array)
     });
 }
 /**
- * 
+ * Gets called for every request
  * @param {FetchEvent} event 
+ * @memberof ServiceWorker
  */
 function fetch_it(event)
 {
@@ -500,10 +502,10 @@ self.addEventListener('message', function (event)
         if (!extendedPrecaching && !precachedExtended)
             precacheExternal();
         else if (precachedExtended)
-            {
-                actualState = WorkerStates.downloadedExternal;
-                postMessageToClient({ actualState: actualState, messageType: "caching_state_changed", from: "messageListener" });
-            }
+        {
+            actualState = WorkerStates.downloadedExternal;
+            postMessageToClient({ actualState: actualState, messageType: "caching_state_changed", from: "messageListener" });
+        }
     }
     else if (event.data.tag === 'clean')
     {
@@ -520,7 +522,24 @@ self.addEventListener('message', function (event)
     }
     else if (event.data.tag === 'queryState')
     {
-        postMessageToClient({ actualState: actualState, messageType: "currentState"});
+        if (actualState)
+        {
+            postMessageToClient({ actualState: actualState, messageType: "currentState" });
+        }
+        else
+        {
+            checkEssential().then(() =>
+            {
+                actualState = WorkerStates.downloadedLocal;
+                return checkExtended().then(() =>
+                {
+                    actualState = WorkerStates.downloadingExternal;
+                })
+            }).finally(() =>
+            {
+                postMessageToClient({ actualState: actualState, messageType: "currentState" });
+            })
+        }
     }
 });
 function postMessageToClient(data, targetClientId)
