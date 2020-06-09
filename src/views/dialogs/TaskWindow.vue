@@ -13,8 +13,11 @@
             Zatím nic. Zde uvidíte soubory, které se konvertují na pozadí a podobné úlohy...
           </p>
           <div class="list-group list-group-flush" v-else>
-            <div class="list-group-item list-group-item-action hover-parent" v-for="task in tasks" :key="task.id"><i class="material-icons primaryIcon">{{task.icon}}</i>&ensp;{{task.name}}
-              <label class="mt-2 mb-1 ml-3" v-if="task.description" v-html="task.description"></label><i class="material-icons loading-icon text-success parent-hover-disable" v-if="task.state=='completed'">check</i><i class="material-icons loading-icon parent-hover-enable unhover-disable hover-red" v-if="task.state=='completed'" @click="task.delete()">close</i></div>
+            <div class="list-group-item list-group-item-action hover-parent" v-for="task in tasks" :key="task.id" :id="'task-'+task.id"><i class="material-icons primaryIcon">{{task.icon}}</i>&ensp;{{task.name}}
+              <label class="mt-2 mb-1 ml-3" v-if="task.description" v-html="task.description"></label>
+              <i class="material-icons loading-icon text-success parent-hover-disable" v-if="task.isCompleted">check</i>
+              <i class="material-icons loading-icon text-danger parent-hover-disable" v-if="task.isFailed">error</i>
+              <i class="material-icons loading-icon parent-hover-enable unhover-disable hover-red" v-if="task.isCompleted||task.isFailed" @click="task.delete()">close</i></div>
           </div>
           <a :class="'btn btn-outline-dark '+(completedTasks? 'opaque':'unopaque')" @click="clearCompleted"><i class="material-icons">clear_all</i>&ensp;Smazat dokončené</a>
         </div>
@@ -24,15 +27,15 @@
 </template>
 
 <script>
-import Settings from '../../js/Settings';
+import Settings from "../../js/Settings";
 export default {
 	data() {
 		return {
 			tasks: this.$store.state.tasks,
-      completedTasks: 0,
-      dark: this.$parent.preferences.Theme=='dark'
+			completedTasks: 0,
+			dark: this.$parent.preferences.Theme == "dark"
 		};
-	},
+  },
 	mounted() {
 		$(this.$el).on("show.bs.modal", () => {
 			var count = 0;
@@ -43,7 +46,7 @@ export default {
 	methods: {
 		clearCompleted() {
 			this.$store.commit("clearCompletedTasks");
-		}
+    }
 	}
 };
 </script>

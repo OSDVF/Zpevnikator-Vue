@@ -4,6 +4,10 @@ import globalManager from '../js/global'
  */
 class Task
 {
+    /**
+     * Construct new Task object
+     * @note Use Tasks.AddActive instead
+     */
     constructor({name, description, icon, state })
     {
         this.id = null;
@@ -25,7 +29,7 @@ class Task
      */
     completed()
     {
-        this.state = 'completed';
+        this.isCompleted = true;
         globalManager.Vue.$emit('someTaskCompleted');
     }
     /**
@@ -33,7 +37,7 @@ class Task
      */
     failed()
     {
-        this.state = 'failed';
+        this.isFailed=true;
         globalManager.Vue.$emit('someTaskCompleted');
     }
     /**
@@ -42,6 +46,28 @@ class Task
     delete()
     {
         globalManager.Vue.$store.commit('removeTask', this.id);
+    }
+    set isFailed(val)
+    {
+        this.state = val?'failed':this.state;
+    }
+    set isCompleted(val)
+    {
+        this.state = val?'completed':this.state;
+    }
+    /**
+     * Gets or sets if task is in failed state
+     */
+    get isFailed()
+    {
+        return this.state == 'failed'
+    }
+    /**
+     * Gets or sets if task is in completed state
+     */
+    get isCompleted()
+    {
+        return this.state == 'completed'
     }
 }
 /**

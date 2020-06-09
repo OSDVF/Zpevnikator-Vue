@@ -117,7 +117,7 @@ export default new Vuex.Store({
     {
       for (var i = 0; i < state.tasks.length; i++)
       {
-        if (state.tasks[i].id = id)
+        if (state.tasks[i].id == id)
           state.tasks.splice(i, 1);
       }
     }

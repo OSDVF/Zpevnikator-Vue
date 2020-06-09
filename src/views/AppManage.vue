@@ -3,7 +3,7 @@
     <div class="p">
       <div class="mb-2 text-info" v-show="!totalSongs">Index písní je prázdný - stáhněte ho tlačítkem níže 😏</div>
       <button class="btn btn-secondary pwa-d-none mb-2 mr-2" @click="appDownload">{{workerState>=6?'Instalovat':'Stáhnout aplikaci'}}</button>
-      <button class="btn btn-light mb-2" @click="updateIndex">Aktualizovat index písní</button>&ensp;
+      <button class="btn btn-light mb-2 mr-2" @click="updateIndex">Aktualizovat index písní</button>&ensp;
       <a data-toggle="collapse" href="#moreOptions">Více...</a>
       <p class="collapse" id="moreOptions">
         <button class="btn btn-danger mb-2 mr-2" @click="purgeSongs">Smazat databázi</button>
@@ -34,7 +34,7 @@
         <div class="list-group-item" id="all_song_download">
           <i class="material-icons">touch_app</i> Stáhnutí písní
           <span class="float-right">
-            <button class="btn btn-outline-secondary" id="songDownloadBtn" @click="downloadAllSongs()">Stáhnout všechny písně</button>&ensp;
+            <button class="btn btn-outline-secondary" id="songDownloadBtn" @click="downloadAllSongs()">Stáhnout chybějící písně</button>&ensp;
             <i class="material-icons rotating" v-show="downloadingAllSongs">autorenew</i>
             <CheckButton :display="downloadedSongs==totalSongs&&totalSongs!=0" />
           </span>
@@ -352,60 +352,80 @@ export default {
 			);
 		},
 		downloadAllSongs() {
-			var task;
-			function generalFailMess()
+			if(this.downloadingAllSongs)
 			{
-				UIHelpers.Message("Nepodařilo se otevřít index", "danger")
-				if(task)task.failed();
+				UIHelpers.Message("Stahování již probíhá",null,800);
+				return;
 			}
-			SongDB.openCache().then(cache => {
-				task = Tasks.AddActive("Stažení všech písní", "Startuje..", "cloud_download");
+			this.checkDownloadedSongs(); //Update the counters
 
-				this.downloadingAllSongs = true;
-				NetworkUtils.getNoCache();
-				SongDB.read(store => {
-					var storeRequest = store.openCursor();
-					var downloadingIndex = 0;
+			var task;
+			const _this = this;
+			function tskFail() {
+				if (task) task.failed();
+				_this.downloadingAllSongs = false;
+			}
+			function generalFailMess() {
+				UIHelpers.Message("Nepodařilo se otevřít index", "danger");
+				tskFail();
+			}
+			var displayedFail = false;
+			function connectionFailMess() {
+				if (displayedFail) return Promise.reject();
+				displayedFail = true;
+				UIHelpers.Message("Připojení ztraceno", "danger");
+				tskFail();
+				return Promise.reject();
+			}
+			SongDB.openCache()
+				.then(cache => {
+					task = Tasks.AddActive("Stažení všech písní", "Startuje..", "cloud_download");
 
-					var lastPromise;
-					storeRequest.onsuccess = event => {
-						var cursor = event.target.result;
-						if (cursor) {
-							let value = cursor.value;
-							var req = NetworkUtils.noCacheRequest(SongProcessing.createGetSongUrl(value.url));
-							const _this = this;
-							function fetchTheSong() {
-								return new Promise(res => {
+					this.downloadingAllSongs = true;
+					NetworkUtils.getNoCache();
+					SongDB.read(store => {
+						var storeRequest = store.openCursor();
+						var downloadingIndex = 0;
+
+						var lastPromise;
+						storeRequest.onsuccess = event => {
+							var cursor = event.target.result;
+							if (cursor) {
+								let value = cursor.value;
+								var req = NetworkUtils.noCacheRequest(SongProcessing.createGetSongUrl(value.url));
+								function fetchTheSong() {
 									downloadingIndex++;
 
 									var descripton = (task.description = `${value.name} (${downloadingIndex}/${_this.totalSongs})`);
 									_this.currentDownloadingSong = descripton;
-									fetch(req).then(response => {
-										cache.put(value.url, response);
-										res();
-									});
-								});
-							}
-							if (lastPromise) lastPromise = lastPromise.then(fetchTheSong);
-							else lastPromise = fetchTheSong();
+									return cache.match(req).then(resp=>{
+										if(resp) return resp;//return if exists
+										return cache.add(req);//else make the request
+									})
+								}
 
-							cursor.continue();
-						} else {
-							lastPromise
-								.then(() => {
-									this.currentDownloadingSong = null;
-									this.downloadedSongs = downloadingIndex;
-									task.completed();
-								})
-								.catch(() => {
-									UIHelpers.Message("Neprve stahuji index", "info");
-									task.failed();
-								});
-						}
-					};
-					storeRequest.onerror = generalFailMess;
+								if (lastPromise) lastPromise = lastPromise.then(fetchTheSong).catch(connectionFailMess);
+								else lastPromise = fetchTheSong();
+
+								cursor.continue();
+							} else {
+								if (lastPromise)
+									lastPromise.then(() => {
+										this.currentDownloadingSong = null;
+										this.downloadedSongs = downloadingIndex;
+										task.completed();
+										_this.downloadingAllSongs = false;
+									});
+								else {
+									UIHelpers.Message("Neprve stáhněte index", "info");
+									tskFail();
+								}
+							}
+						};
+						storeRequest.onerror = generalFailMess;
+					});
 				})
-			}).catch(generalFailMess);
+				.catch(generalFailMess);
 		},
 		resetSettings() {
 			UIHelpers.Dialog(
