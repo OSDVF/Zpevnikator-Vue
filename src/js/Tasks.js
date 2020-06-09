@@ -4,7 +4,7 @@ import globalManager from '../js/global'
  */
 class Task
 {
-    constructor(name, description, icon, state)
+    constructor({name, description, icon, state })
     {
         this.id = null;
         this.name = name;
@@ -26,6 +26,14 @@ class Task
     completed()
     {
         this.state = 'completed';
+        globalManager.Vue.$emit('someTaskCompleted');
+    }
+    /**
+     * Show user the notification about the task has failed
+     */
+    failed()
+    {
+        this.state = 'failed';
         globalManager.Vue.$emit('someTaskCompleted');
     }
     /**
@@ -57,7 +65,7 @@ var Tasks = {
      */
     AddActive(name, description, icon) //Returns "Task" object
     {
-        const newTask = new Task(name, description, icon);
+        const newTask = new Task({name, description, icon});
         newTask.run();
         return newTask;
         /*var nat = document.getElementById("noActiveTasks");
@@ -198,14 +206,14 @@ var Tasks = {
         return count;
     },
     /**
-     * The count of ongoing tasks
+     * The count of ongoing tasks = total - completed - failed
      */
     get UncompletedCount()
     {
         const tasks = globalManager.Vue.$store.state.tasks;
         var count = 0;
         for (var i = tasks.length - 1; i >= 0; i--)
-            if (tasks[i].state != 'completed') count++;
+            if (tasks[i].state != 'completed'&&tasks[i].state != 'failed') count++;
         return count;
     }
 };

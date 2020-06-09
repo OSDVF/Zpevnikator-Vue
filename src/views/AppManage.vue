@@ -1,6 +1,7 @@
 <template>
   <main class="container">
     <div class="p">
+      <div class="mb-2 text-info" v-show="!totalSongs">Index písní je prázdný - stáhněte ho tlačítkem níže 😏</div>
       <button class="btn btn-secondary pwa-d-none mb-2 mr-2" @click="appDownload">{{workerState>=6?'Instalovat':'Stáhnout aplikaci'}}</button>
       <button class="btn btn-light mb-2" @click="updateIndex">Aktualizovat index písní</button>&ensp;
       <a data-toggle="collapse" href="#moreOptions">Více...</a>
@@ -34,10 +35,11 @@
           <i class="material-icons">touch_app</i> Stáhnutí písní
           <span class="float-right">
             <button class="btn btn-outline-secondary" id="songDownloadBtn" @click="downloadAllSongs()">Stáhnout všechny písně</button>&ensp;
-            <i class="material-icons rotating d-none" id="songProgressCircle">autorenew</i>
-            <CheckButton :display="downloadedSongs==totalSongs" />
+            <i class="material-icons rotating" v-show="downloadingAllSongs">autorenew</i>
+            <CheckButton :display="downloadedSongs==totalSongs&&totalSongs!=0" />
           </span>
           <br style="clear:both" />
+          <span v-show="currentDownloadingSong!=null">{{currentDownloadingSong}}<br /></span>
           <span class="text-warning">{{"Staženo " + downloadedSongs + "/" +totalSongs + " písní"}}</span>
         </div>
       </div>
@@ -158,10 +160,11 @@
 </template>
 
 <script>
-import { Environment, UIHelpers, SongProcessing, WorkerStates } from "../js/Helpers";
+import { Environment, UIHelpers, SongProcessing, WorkerStates, NetworkUtils } from "../js/Helpers";
 import { SongDB } from "../js/databases/SongDB";
 import globalManager from "@/js/global";
 import CheckLoadingIconVue from "../components/CheckLoadingIcon.vue";
+import Tasks from "../js/Tasks";
 export default {
 	data() {
 		return {
@@ -170,8 +173,10 @@ export default {
 			browserDetected: false,
 			verdictClass: "text-primary",
 			downloadedSongs: 0,
-			totalSongs: Infinity,
-			workerState: this.$store.state.workerState
+			totalSongs: 0,
+			workerState: this.$store.state.workerState,
+			downloadingAllSongs: false,
+			currentDownloadingSong: null
 		};
 	},
 	components: {
@@ -239,8 +244,7 @@ export default {
 	methods: {
 		appDownload() {
 			this.checkState();
-			if(this.workerState >=WorkerStates.downloadedExternal )
-			{
+			if (this.workerState >= WorkerStates.downloadedExternal) {
 				globalManager.appDownload();
 			}
 		},
@@ -347,7 +351,62 @@ export default {
 				"Chcete pokračovat?"
 			);
 		},
-		downloadAllSongs() {},
+		downloadAllSongs() {
+			var task;
+			function generalFailMess()
+			{
+				UIHelpers.Message("Nepodařilo se otevřít index", "danger")
+				if(task)task.failed();
+			}
+			SongDB.openCache().then(cache => {
+				task = Tasks.AddActive("Stažení všech písní", "Startuje..", "cloud_download");
+
+				this.downloadingAllSongs = true;
+				NetworkUtils.getNoCache();
+				SongDB.read(store => {
+					var storeRequest = store.openCursor();
+					var downloadingIndex = 0;
+
+					var lastPromise;
+					storeRequest.onsuccess = event => {
+						var cursor = event.target.result;
+						if (cursor) {
+							let value = cursor.value;
+							var req = NetworkUtils.noCacheRequest(SongProcessing.createGetSongUrl(value.url));
+							const _this = this;
+							function fetchTheSong() {
+								return new Promise(res => {
+									downloadingIndex++;
+
+									var descripton = (task.description = `${value.name} (${downloadingIndex}/${_this.totalSongs})`);
+									_this.currentDownloadingSong = descripton;
+									fetch(req).then(response => {
+										cache.put(value.url, response);
+										res();
+									});
+								});
+							}
+							if (lastPromise) lastPromise = lastPromise.then(fetchTheSong);
+							else lastPromise = fetchTheSong();
+
+							cursor.continue();
+						} else {
+							lastPromise
+								.then(() => {
+									this.currentDownloadingSong = null;
+									this.downloadedSongs = downloadingIndex;
+									task.completed();
+								})
+								.catch(() => {
+									UIHelpers.Message("Neprve stahuji index", "info");
+									task.failed();
+								});
+						}
+					};
+					storeRequest.onerror = generalFailMess;
+				})
+			}).catch(generalFailMess);
+		},
 		resetSettings() {
 			UIHelpers.Dialog(
 				"Nastavení aplikace včetně vybrané transpozice písní bude obnoveno na počáteční hodnoty. Offline databáze zůstane zachována.",

@@ -30,12 +30,11 @@ export default {
 		return {
 			tasks: this.$store.state.tasks,
       completedTasks: 0,
-      dark: Settings.Theme=='dark'
+      dark: this.$parent.preferences.Theme=='dark'
 		};
 	},
 	mounted() {
 		$(this.$el).on("show.bs.modal", () => {
-      this.dark = Settings.Theme == 'dark'
 			var count = 0;
 			for (var i = this.tasks.length - 1; i >= 0; i--) if (this.tasks[i].state == "completed") count++;
 			this.completedTasks = count;

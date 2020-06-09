@@ -6,7 +6,7 @@
       <button class="navbar-toggler hidden-md-up" type="button" data-toggle="collapse" data-target="#mainNavCollapse" aria-controls="mainNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse navbar-toggleable-sm bg-light" id="mainNavCollapse">
+      <div class="collapse navbar-collapse navbar-toggleable-sm bg-light" id="mainNavCollapse" ref="navCollapse">
         <ul class="navbar-nav mr-auto mt-md-2 mt-xl-0 flex-md-nowrap">
           <li v-for="item of navPages" class="nav-item mr-xl-2" v-if="!('condition' in item)||item.condition()" @click="hideNav">
             <router-link :class="'nav-link'+ (pathname==item.href ? ' active':'')" :to="item.href">
@@ -157,7 +157,7 @@ export default {
 			}
 			next();
 		});
-		var navCollapse = (this.navCollapse = $(".navbar-collapse"));
+		var navCollapse = $(this.$refs.navCollapse);
 		if (!this.preferences.CookiesAccepted) this.notAcceptedTerms = true;
 		var nav = $(".navbar");
 		navCollapse.on("show.bs.collapse", function() {
@@ -171,7 +171,7 @@ export default {
 	},
 	methods: {
 		hideNav() {
-			this.navCollapse.collapse("hide");
+			$(this.$refs.navCollapse).collapse("hide");
 		},
 		applyThemeToChildren() {
 			Settings.applyThemeToComponents($(this.$refs.mainContent));

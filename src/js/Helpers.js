@@ -3,6 +3,11 @@
  * @classdesc API for simple network transfer with cache handling
  */
 const NetworkUtils = {
+	/**
+	 * Performs a fetch request with proper headers to supress browser caching
+	 * @param {string} uri 
+	 * @returns {Promise<Response>}
+	 */
 	getNoCache: function (uri)
 	{
 		return fetch(uri, {
@@ -11,6 +16,11 @@ const NetworkUtils = {
 			}
 		});
 	},
+	/**
+	 * Performs a fetch request with proper headers to force browser caching to revalidate
+	 * @param {string} uri 
+	 * @returns {Promise<Response>}
+	 */
 	revalidateCache: function (uri)
 	{
 		return fetch(uri, {
@@ -19,6 +29,11 @@ const NetworkUtils = {
 			}
 		});
 	},
+	/**
+	 * Creates a Request object with proper headers to supress browser caching
+	 * @param {string} uri 
+	 * @returns {Request}
+	 */
 	noCacheRequest: function (uri)
 	{
 		var noCacheHead = new Headers();
@@ -63,6 +78,14 @@ const NetworkUtils = {
  */
 const SongProcessing = {
 	anchorsPattern: /\d(?:\)|\.|x|:)|bridge|coda|intro|outro|sloka|mezihra|předehra|dohra|\/:|:\/|refren|refrén|ref:|ref\.:|ref\./gmi,
+	/**
+	 * Creates proper url for the 'get me that song' request
+	 * @param {string} id The song identifier 'e.g. my-best-song'
+	 */
+	createGetSongUrl(id)
+	{
+		return process.env.VUE_APP_API_URL+'/songs/get.php?id='+id;
+	},
 	makeRightSequencesBold: function (text)
 	{
 		return text.replace(this.anchorsPattern, this.makeBold)

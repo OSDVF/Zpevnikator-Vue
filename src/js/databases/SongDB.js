@@ -25,7 +25,21 @@ const SongDB = {
     eventBus: new Vue(),
     updatingIndex: false,
     pendingDBRequests: [],
+    cacheName:process.env.VUE_APP_SONG_DB_NAME,
     onmessage: console.log,
+    /**
+     * Returns CacheStorage that is assigned to be the place to store downloaded offline songs
+     * @returns {Promise<Cache>} Returns the opened cache object or a rejected Promise on error
+     */
+    openCache()
+    {
+        if('caches' in window)
+        {
+            return caches.open(this.cacheName);
+        }
+        this.onmessage('Nelze otevřít offline databázi písní','warning');
+        return Promise.reject();
+    },
     downloadIndex(callback)
     {
         let createIndexTask;
