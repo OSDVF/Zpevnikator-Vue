@@ -1,6 +1,10 @@
 //Dependent on together API
 import Settings from '../Settings'
 
+/**
+ * Access information about logged user
+ * @class
+ */
 var UserStoredInfo = {
     BindCheckbox: function (element, settingName, changed)
     {
@@ -26,6 +30,9 @@ var UserStoredInfo = {
             });
         }
     },
+    /**
+     * Name and ID
+     */
     get Info()
     {
         return {
@@ -33,11 +40,19 @@ var UserStoredInfo = {
             id: this.ID
         }
     },
+    /**
+     * Credentials hash, used for server-side authentification
+     * @type string
+     */
     get Credentials() { return localStorage.getItem(Settings.KeyPrefix + "loginCredentials") },
     set Credentials(val)
     {
         localStorage[Settings.KeyPrefix + "loginCredentials"] = val
     },
+    /**
+     * Wordpress-side ID
+     * @type Number
+     */
     get ID()
     {
         return localStorage.getItem(Settings.KeyPrefix + "userID");
@@ -50,11 +65,22 @@ var UserStoredInfo = {
     {
         localStorage[Settings.KeyPrefix + "userName"] = val;
     },
+    /**
+     * Username (not full name)
+     * @type string
+     */
     get Name()
     {
         return localStorage.getItem(Settings.KeyPrefix + "userName");
     },
+    /**
+     * Checks if there is any credentials hash in device storage
+     * @returns bool
+     */
     get IsLoggedIn() { return (localStorage.getItem(Settings.KeyPrefix + "loginCredentials") !== null); },
+    /**
+     * Delete stored info abour user = log him out
+     */
     Delete()
     {
         localStorage.removeItem(Settings.KeyPrefix + "userName");
@@ -64,6 +90,9 @@ var UserStoredInfo = {
 
 };
 Object.defineProperties(UserStoredInfo, {
+    /**
+     * @todo Notes should be implemented as Zpěvníkátor-Together module
+     */
     SyncNotes: {
         get: function ()
         {

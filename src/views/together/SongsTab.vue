@@ -1,28 +1,51 @@
 <template>
-    <div class="likeMain">
-		<div class="card bg-light">
-			<div class="card-body">
-				<h5 class="card-title">Můj obsah</h5>
-				<p class="card-text">Spravujte své písně, nebo skupiny, ve kterých můžete sdílet playlisty</p>
-			</div>
-			<div class="expansion-panel list-group-item">
-				<a aria-controls="collapseMySongs" aria-expanded="false" class="expansion-panel-toggler collapsed" data-toggle="collapse" href="#collapseMySongs" >
-					<span><i class="material-icons">person_outline</i>&ensp;Mé písně</span>
-					<div class="expansion-panel-icon ml-3 text-light-50">
-						<i class="collapsed-show material-icons">keyboard_arrow_down</i>
-						<i class="collapsed-hide material-icons">keyboard_arrow_up</i>
-					</div>
-				</a>
-				<div class="collapse" id="collapseMySongs">
-					<div class="expansion-panel-body">
-						<span id="emptyMessage">Nepodařilo se načíst žádné vaše písně</span>
-						<table id="mySongs" class="wpsongbook_list table table-striped table-hover table-bordered table-light">
-							<thead><tr><th>Název</th><th>Autor</th><th>Jazyk</th></tr></thead>
-							<tbody></tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
+  <div class="likeMain">
+    <SongList :filter="filterMySongs" :preferences="$parent.$parent.preferences" :additionalButtons="shareButton" />
+	<ReloadBtn @click="refreshListClicked" shifted-up/>
+
+	<div class="d-none" ref="groupsList">
+		<groups-list :groups="$parent.groups" :onItemClick="shareToGroup"/>
 	</div>
+  </div>
 </template>
+
+<script>
+import GroupsListVue from "../../components/GroupsList.vue";
+import SongList from "@/components/SongList";
+import { UIHelpers } from '../../js/Helpers';
+import FloatingActionButton from '@/components/FloatingActionButton';
+
+export default {
+	created() {
+		var _class = this;
+		this.shareButton = [
+			{
+				icon: "share",
+				title: "Sdílet",
+				class: "btn-outline-success",
+				onClick() {
+					UIHelpers.Dialog(_class.$refs.groupsList, null,UIHelpers.DialogType.Ok);
+					_class.$refs.groupsList.classList.remove("d-none");
+				}
+			}
+		];
+	},
+	components: {
+		SongList: SongList,
+		GroupsList: GroupsListVue,
+		ReloadBtn: FloatingActionButton
+	},
+	methods: {
+		filterMySongs(songInfo, offl) {
+			return !!songInfo.status;
+		},
+		shareToGroup(groupInfo)
+		{
+			console.log(groupInfo);
+		},
+		refreshListClicked() {
+			SongDB.downloadIndex(this.$refs.songList.updateTable);
+		}
+	}
+};
+</script>

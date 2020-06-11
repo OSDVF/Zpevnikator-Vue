@@ -1,42 +1,3 @@
-@font-face {
-	font-family: 'Material Icons';
-	font-style: normal;
-	font-weight: 400;
-	src: url(fonts/MaterialIcons-Regular.eot);
-	/* For IE6-8 */
-	src: local('Material Icons'),
-		local('MaterialIcons-Regular'),
-		url(fonts/MaterialIcons-Regular.woff) format('woff'),
-		url(fonts/MaterialIcons-Regular.ttf) format('truetype');
-}
-
-.material-icons {
-	font-family: 'Material Icons';
-	font-weight: normal;
-	font-style: normal;
-	font-size: 24px;
-	/* Preferred icon size */
-	display: inline-block;
-	line-height: 1;
-	text-transform: none;
-	letter-spacing: normal;
-	word-wrap: normal;
-	white-space: nowrap;
-	direction: ltr;
-
-	/* Support for all WebKit browsers. */
-	-webkit-font-smoothing: antialiased;
-	/* Support for Safari and Chrome. */
-	text-rendering: optimizeLegibility;
-
-	/* Support for Firefox. */
-	-moz-osx-font-smoothing: grayscale;
-
-	/* Support for IE. */
-	font-feature-settings: 'liga';
-	max-width: 30px;
-}
-
 .body-black,
 .body-white {
 	width: 100%;
@@ -517,11 +478,6 @@ main .fw {
 	margin-right: var(--mainMargin);
 }
 
-main.container {
-	padding-left: calc(var(--mainMargin) * -1);
-	padding-right: calc(var(--mainMargin) * -1);
-}
-
 main .pw {
 	width: var(--pageWidth);
 	max-width: var(--pageWidth);
@@ -671,6 +627,10 @@ i.break {
 
 .btn {
 	display: block;
+}
+td .btn
+{
+	min-width: 0;
 }
 
 .btn-gr {

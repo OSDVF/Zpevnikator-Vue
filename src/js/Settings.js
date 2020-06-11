@@ -1,6 +1,13 @@
 import { NoSleepHelper } from '../js/Helpers';
+/**
+ * Overall preferences manipulation
+ */
 class Preferences
 {
+	/**
+	 * C-style copy constructor
+	 * @param {Preferences} [init] Preferences object to copy properties from
+	 */
 	constructor(init)
 	{
 		for (var prop in init)
@@ -113,8 +120,15 @@ class Preferences
 		document.getElementById("notifEnable").checked = enable;
 	}
 }
+/**
+ * Stored settings related to song page appearance
+ */
 class SongCustomization
 {
+	/**
+	 * C-style copy constructor
+	 * @param {SongCustomization} [init] SongCustomization object to copy properties from
+	 */
 	constructor(init)
 	{
 		for (var prop in init)
@@ -222,11 +236,25 @@ class SongCustomization
 		localStorage.setItem(Settings.KeyPrefix + 'pageMargins', margins);
 	}
 }
+/**
+ * @class
+ * @classdesc Holds current user configuration objects
+ */
 var Settings = {
 	_preferences: new Preferences(),
 	_songCustomization: new SongCustomization(),
 	Customization:SongCustomization,
+	/**
+	 * Used to mark localStorage fields which we don't want to delete when downloading a new version of the application
+	 * @type {string}
+	 * @default
+	 */
 	KeyPrefix: 'pref-',
+	/**
+	 * Changes application theme to dark/light
+	 * @param {string} toWhat 
+	 * @param {boolean} forceIt 
+	 */
 	changeTheme(toWhat, forceIt)
 	{
 		if (this._preferences.Theme != toWhat || forceIt)
@@ -236,6 +264,10 @@ var Settings = {
 			$("meta[name='theme-color']").attr("content", toWhat == 'dark' ? "#424242" : process.env.VUE_APP_THEME_COLOR);
 		}
 	},
+	/**
+	 * Changes css classes of child elements according to current theme settings
+	 * @param {JQuery<HTMLElement>} parent 
+	 */
 	applyThemeToComponents(parent)
 	{
 		parent.find(".dark, .light").toggleClass("dark").toggleClass("light");
@@ -267,6 +299,9 @@ var Settings = {
 			selects.attr('data-style', "btn-light");
 		}
 	},
+	/**
+	 * Applies currently selected theme to whole page
+	 */
 	applySettings()
 	{
 		this.changeTheme($("#themeSelect").val());
@@ -296,13 +331,13 @@ var Settings = {
 		this.SongCustomization = newSongCust;
 		this.Preferences = newPrefs;
 	},
+	/**
+	 * @type Preferences
+	 */
 	get Preferences()
 	{
 		return this._preferences;
 	},
-	/**
-	 * @param {object} val Initialization object
-	 */
 	set Preferences(val)
 	{
 		this._preferences = new Preferences(val);
@@ -314,9 +349,6 @@ var Settings = {
 	{
 		return this._songCustomization;
 	},
-	/**
-	 * @param {object} val Initialization object
-	 */
 	set SongCustomization(val)
 	{
 		this._songCustomization = new SongCustomization(val)

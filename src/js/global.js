@@ -1,8 +1,12 @@
 //Includes all the global hooks for external scripts which should be executed after DOM load
 
-import { UIHelpers, WorkerStates, Environment } from './Helpers'
+import { UIHelpers, Environment, WorkerStates } from './Helpers'
 import Tasks from './Tasks'
 var pendingReady = [];
+/**
+ * @class
+ * @classdesc Global object that holds application-wide resources
+ */
 const manager = {
     /**
      * @type Vue
@@ -13,11 +17,19 @@ const manager = {
         this._vue = to;
         UIHelpers.store = to.$store;
     },
+    /**
+     * Return global application instance
+     */
     get Vue()
     {
         return this._vue;
     },
-    resourcesReady: function (context, callback)
+    /**
+     * Call the callback with 'this' set to context when the document is ready
+     * @param {object} context 
+     * @param {Function} callback 
+     */
+    resourcesReady(context, callback)
     {
         if (typeof $ !== 'undefined' && $.isReady)
             callback.call(context);
@@ -25,11 +37,24 @@ const manager = {
     },
     setupSWMessageBus: setupSWMessageBus,
     workerReadyWaiting: [],
+    /**
+     * Sends a sync-message to the serviceWorker. It is the only communication channel from page->SW
+     * @function registerSync
+     * @param {*} tag Totaly anything to send to SW
+     * @memberof manager
+     */
     registerSync: registerSync,
+    /**
+     * Navigate the global router to that url
+     * @param {string} url 
+     */
     navigate(url)
     {
         this._vue.$router.push(url);
     },
+    /**
+     * Shows for the PWA install dialog
+     */
     appDownload()
     {
         if (Environment.InsidePwa)
@@ -141,17 +166,21 @@ function setupEnvironmentFixes()
 
 function setupSentry(Vue)
 {
-    if (localStorage.disableSentry != 'true' && typeof (Sentry) != 'undefined')
-    {
-        Sentry.init({
-            dsn: process.env.VUE_APP_SENTRY_DNS,
-            release: process.env.DEV_CHANNEL + '@' + process.env.VUE_APP_VERSION,
-            integrations: [new Sentry.Integrations.Vue({
-                Vue,
-                attachProps: true
-            })],
-        });
-    }
+    if (localStorage.disableSentry != 'true' && typeof (Sentry) != 'undefined') try
+        {
+            Sentry.init({
+                dsn: process.env.VUE_APP_SENTRY_DSN,
+                release: location.hostname.split('.')[0] + '@' + process.env.VUE_APP_VERSION, /* Creates pattern like dev@2.0 */
+                integrations: [new Sentry.Integrations.Vue({
+                    Vue,
+                    attachProps: true
+                })],
+            });
+            window.addEventListener('error', function (e)
+            {
+                Sentry.captureException(e);
+            });
+        } catch (ex) { console.info('Could not contact Sentry server'); }
 }
 
 function setupTelemetry()
@@ -257,7 +286,7 @@ function afterWorkerRegistration(clb)
 {
     if (manager.Vue.$store.state.workerState > 0)
         return clb();
-    manager.workerReadyWaiting.push(cls);
+    manager.workerReadyWaiting.push(clb);
 }
 function registerSync(tag)
 {
@@ -350,6 +379,9 @@ function setupSWMessageBus()
                         console.log("Probably updated service worker and EssentialCache is OK");
                         break;
                 }
+                break;
+            case 'currentState':
+                manager.Vue.$store.commit('workerState', event.data.actualState);
                 break;
         }
     });
