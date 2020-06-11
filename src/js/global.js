@@ -286,7 +286,7 @@ function afterWorkerRegistration(clb)
 {
     if (manager.Vue.$store.state.workerState > 0)
         return clb();
-    manager.workerReadyWaiting.push(cls);
+    manager.workerReadyWaiting.push(clb);
 }
 function registerSync(tag)
 {

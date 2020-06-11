@@ -5,6 +5,25 @@
 > Lepší, rychlejší, skromnější, než všechny předchozí zpěvníkátory...
 ## O projektu
 Vznikl pro potřeby [Dorostu a mládeže na Rozvoji](http://dorostmladez.cz)
+## Funkce
+- Online databáze písní
+- Offline instalace jako PWA
+- Osobní účty uživatelů
+- Transpozice
+- Tmavý vzhled
+- Přizpůsobení písma
+- Nevypnutí obrazovky
+## Připravujeme
+- Editor písní
+- Vybrání zobrazených akordů podle preferovaného nástroje
+- Konverze písní do Wordu
+- Notifikace
+- Zpěvníkátor Together
+    - Playlisty
+    - Přidávání poznámek
+    - Zvýrazňování textu
+    - Sdílení písní, playlistů a poznámek ve skupinách
+
 ### Publikované verze
 - [Stabilní](https://chvaly.dorostmladez.cz)
 - [Experimentální](https://dev.dorostmladez.cz) - aktualizována při každé změně

@@ -174,10 +174,15 @@ export default {
 			verdictClass: "text-primary",
 			downloadedSongs: 0,
 			totalSongs: 0,
-			workerState: this.$store.state.workerState,
 			downloadingAllSongs: false,
 			currentDownloadingSong: null
 		};
+	},
+	computed:{
+		workerState()
+		{
+			return this.$store.state.workerState;
+		}
 	},
 	components: {
 		CheckButton: CheckLoadingIconVue
