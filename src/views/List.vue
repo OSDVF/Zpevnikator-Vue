@@ -17,6 +17,8 @@
 <script>
 import SongList from "@/components/SongList";
 import { SongDB } from "@/js/databases/SongDB.js";
+import FloatingActionButton from '../components/FloatingActionButton';
+
 export default {
 	methods: {
 		offlineInfoDisplay()
@@ -36,12 +38,15 @@ export default {
 		if (lastListScroll)
 			//Restore previous scroll position
 			document.documentElement.scrollTop = lastListScroll;
-		localStorage.removeItem(this.$route.name+"lastListScroll");
-
-		if(performance.navigation.type ==1)//Page was reloaded
-		{
-			this.refreshListClicked();
-		}
+		localStorage.removeItem(this.$route.name + "lastListScroll");
+	},
+	beforeRouteEnter(to, from, next) {
+		next(vm => {
+			if ((!from || !from.name) && performance.navigation.type == 1) {
+				//Page was reloaded
+				this.refreshListClicked();
+			}
+		});
 	}
 };
 </script>

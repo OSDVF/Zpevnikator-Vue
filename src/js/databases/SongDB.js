@@ -7,6 +7,22 @@ import
 import UserStoredInfo from './UserInfo';
 const dbName = process.env.VUE_APP_SONG_DB_NAME
 const buildNumber = process.env.VUE_APP_DB_BUILDNUMBER
+/**
+* @callback databaseResolveCallback
+* @param {IDBObjectStore} store
+*/
+/**
+ * @typedef SongInfo
+ * @property url
+ * @property author
+ * @property language
+ * @property imported
+ * @property offlineOnly
+ */
+/**
+ * A song database based on indexedDB
+ * @class
+ */
 const SongDB = {
     eventBus: new Vue(),
     updatingIndex: false,
