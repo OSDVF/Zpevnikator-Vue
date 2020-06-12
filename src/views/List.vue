@@ -15,7 +15,6 @@ import SongList from "@/components/SongList";
 import { SongDB } from "@/js/databases/SongDB.js";
 import FloatingActionButton from '../components/FloatingActionButton';
 
-var downloadIndexAtStartup = false;
 export default {
 	methods: {
 		offlineInfoDisplay() {
@@ -37,14 +36,11 @@ export default {
 			document.documentElement.scrollTop = lastListScroll;
 		localStorage.removeItem(this.$route.name + "lastListScroll");
 	},
-	created() {
-		if (downloadIndexAtStartup) this.refreshListClicked();
-	},
 	beforeRouteEnter(to, from, next) {
 		next(vm => {
 			if ((!from || !from.name) && performance.navigation.type == 1) {
 				//Page was reloaded
-				downloadIndexAtStartup = true;
+				this.refreshListClicked();
 			}
 		});
 	}

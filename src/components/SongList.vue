@@ -155,7 +155,7 @@ export default {
 			}
 		},
 		upd(cache) {
-			const _class = this; //TODO: how do we filter author things?
+			const _class = this;
 			try {
 				SongDB.read(
 					function(songStore) {

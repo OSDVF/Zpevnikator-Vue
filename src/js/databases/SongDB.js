@@ -16,6 +16,7 @@ const buildNumber = process.env.VUE_APP_DB_BUILDNUMBER
  * @property author
  * @property language
  * @property imported
+ * @property offlineOnly
  */
 /**
  * A song database based on indexedDB

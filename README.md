@@ -1,7 +1,7 @@
 <h1 style='text-align:center'><img src="http://chvaly.dorostmladez.cz/images/icon-32.png" crossorigin="anonymous"/> Dorostomládežový Zpěvníkátor</h1>
 
 ![Integration](https://github.com/OSDVF/Zpevnikator-Vue/workflows/Integration/badge.svg)
-
+For english, use Google Translate ;)
 > Lepší, rychlejší, skromnější, než všechny předchozí zpěvníkátory...
 ## O projektu
 Vznikl pro potřeby [Dorostu a mládeže na Rozvoji](http://dorostmladez.cz)
@@ -23,6 +23,8 @@ Vznikl pro potřeby [Dorostu a mládeže na Rozvoji](http://dorostmladez.cz)
     - Přidávání poznámek
     - Zvýrazňování textu
     - Sdílení písní, playlistů a poznámek ve skupinách
+
+[Více informací o vývoji Zpěvníkátoru](https://github.com/OSDVF/Zpevnikator-Vue/projects/1) - zde můžete přispět svým nápadem na funkci
 
 ### Publikované verze
 - [Stabilní](https://chvaly.dorostmladez.cz)
