@@ -1,4 +1,13 @@
+/**
+ * @class
+ * @classdesc API for simple network transfer with cache handling
+ */
 const NetworkUtils = {
+	/**
+	 * Performs a fetch request with proper headers to supress browser caching
+	 * @param {string} uri 
+	 * @returns {Promise<Response>}
+	 */
 	getNoCache: function (uri)
 	{
 		return fetch(uri, {
@@ -7,6 +16,11 @@ const NetworkUtils = {
 			}
 		});
 	},
+	/**
+	 * Performs a fetch request with proper headers to force browser caching to revalidate
+	 * @param {string} uri 
+	 * @returns {Promise<Response>}
+	 */
 	revalidateCache: function (uri)
 	{
 		return fetch(uri, {
@@ -15,6 +29,11 @@ const NetworkUtils = {
 			}
 		});
 	},
+	/**
+	 * Creates a Request object with proper headers to supress browser caching
+	 * @param {string} uri 
+	 * @returns {Request}
+	 */
 	noCacheRequest: function (uri)
 	{
 		var noCacheHead = new Headers();
@@ -25,6 +44,7 @@ const NetworkUtils = {
 		})
 	},
 	/**
+	 * Tries to get the resource from cache with the supplied name first and if it fails, it gets it from the internet
 	 * 
 	 * @param {string} uri 
 	 * @param {string} [cacheName]
@@ -52,8 +72,20 @@ const NetworkUtils = {
 		})
 	}
 }
+/**
+ * @class
+ * @classdesc Manipulate HTML song data
+ */
 const SongProcessing = {
 	anchorsPattern: /\d(?:\)|\.|x|:)|bridge|coda|intro|outro|sloka|mezihra|předehra|dohra|\/:|:\/|refren|refrén|ref:|ref\.:|ref\./gmi,
+	/**
+	 * Creates proper url for the 'get me that song' request
+	 * @param {string} id The song identifier 'e.g. my-best-song'
+	 */
+	createGetSongUrl(id)
+	{
+		return process.env.VUE_APP_API_URL+'/songs/get.php?id='+id;
+	},
 	makeRightSequencesBold: function (text)
 	{
 		return text.replace(this.anchorsPattern, this.makeBold)
@@ -65,7 +97,7 @@ const SongProcessing = {
 	chordProToHtml: function (text)
 	{
 		text = "<span class='lyric'>" + text;
-		text = text.replace(/\[([A-Z<(\/][^\[\]]*)\]/gi, function (match, p1)
+		text = text.replace(/\[([A-Z<(\/][^\[\]]*)\]/gi, function (_match, p1)
 		{
 			return "</span><span class='chord'>" + p1.charAt(0).toUpperCase() + p1.slice(1) + "</span><span class='lyric'>"; //First letter uppercase
 		})
@@ -188,8 +220,23 @@ const SongProcessing = {
 		saved = saved && saved != '<p><span class="lyric"><br></span></p>';
 		saved = saved && localStorage.getItem(settingsPrefix + 'editedDirty') == 'true';
 		return saved;
+	},
+	strHash(str)
+	{
+		var hash = 0, i, chr;
+		for (i = 0; i < str.length; i++)
+		{
+			chr = str.charCodeAt(i);
+			hash = ((hash << 5) - hash) + chr;
+			hash |= 0; // Convert to 32bit integer
+		}
+		return hash;
 	}
 };
+/**
+ * @class
+ * @classdesc Generate files from various data
+ */
 const IOUtils = {
 	CreateTxtBlob: function (txt)
 	{
@@ -213,7 +260,10 @@ const IOUtils = {
 		return Math.random().toString(36).substr(2, length);
 	}
 }
-
+/**
+ * @class
+ * @classdesc Data conversion utilities
+ */
 const DataUtils = {
 	urlB64ToUint8Array(base64String)
 	{
@@ -234,6 +284,11 @@ const DataUtils = {
 	}
 }
 
+/**
+ * @todo Use the Wakelock API instead when it will be available
+ * @class
+ * @classdesc Helper for the NoSleep library
+ */
 const NoSleepHelper = {
 	_nosleep: null,
 	initialize: function ()
@@ -254,6 +309,10 @@ const NoSleepHelper = {
 	}
 }
 
+/**
+ * @class
+ * @classdesc Show various procedural UI elements
+ */
 const UIHelpers = {
 	store: null,
 	dialogResult: null,
@@ -266,8 +325,18 @@ const UIHelpers = {
 		"NoButtonsWeak": 6
 	}),
 	/**
+	 * Enum for selecting dialog buttons
+	 * @typedef DialogType
+	 * @property Ok
+	 * @property OkCancel
+	 * @property YesNo
+	 * @property AbortRetryIgnore
+	 * @property NoButtons
+	 * @property NoButtonsWeak Makes the dialog disappeear wher user clicks in outer space
+	 */
+	/**
 	 * Displays a procedural bootstrap modal
-	 * @param {string} text Inner text to display
+	 * @param {string|Node} text Inner text or inner nodes to display
 	 * @param {function} callback Occurs when user clicks one of buttons. Gets one value passed: ok|cancel|yes|no
 	 * @param {(DialogType|string|Array)} type One of values of DialogType, custom string for custom 'Ok' button text or an Array in format [ok,cancel] for custom text for these buttons
 	 * @param {string} header Text in header 
@@ -287,7 +356,6 @@ const UIHelpers = {
 	pendingMessages: [],
 	placeSnackbar($snackbar, text, type, timeout, multiline)
 	{
-		"use strict";
 		$snackbar.addClass(() =>
 		{
 			setTimeout(() =>
@@ -368,7 +436,7 @@ const UIHelpers = {
 			UIHelpers.pendingMessages.pop()();
 	},
 	/**
-	 *  @description Shows message in message area
+	 * @description Shows message in message area
 	 * @param {string} alert Text to display
 	 * @param {string} type Type (success/info/warning/danger)
 	 * @param {number} timeout Time to display the message
@@ -400,6 +468,10 @@ const UIHelpers = {
 	}
 }
 
+/**
+ * @class
+ * @classdesc Get info about user's device and browser
+ */
 const Environment = {
 	isMobile:
 	{
@@ -437,6 +509,18 @@ const Environment = {
 	DarkMode: (window.matchMedia('(prefers-color-scheme: dark)').matches || window.matchMedia('(prefers-dark-interface)'))
 
 }
+/**
+ * Enum. All the possible states of underlying serviceWorker
+ * @typedef WorkerStates
+ * @property dead 0
+ * @property ready 1
+ * @property registered 2
+ * @property downloadingLocal 3
+ * @property downloadedLocal 4
+ * @property downloadingExternal 5
+ * @property downloadedExternal 6
+ * @property essential_ok 7
+ */
 const WorkerStates = Object.freeze({ 'dead': 0, 'ready': 1, 'registered': 2, 'downloadingLocal': 3, 'downloadedLocal': 4, 'downloadingExternal': 5, 'downloadedExternal': 6, 'essential_ok': 7 })
 export
 {

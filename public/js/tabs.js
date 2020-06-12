@@ -1331,7 +1331,10 @@ class Component {
     
           // Update indicator
           this._animateIndicator(prevIndex);
-    
+
+          if (typeof this.options.onTabClick === 'function') {
+            this.options.onTabClick.call(this, tabLink);
+          }
           // Prevent the anchor's default click action
           e.preventDefault();
         }

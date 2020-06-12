@@ -35,6 +35,11 @@ const routes = [
     component: () => import(/* webpackChunkName: "pages" */ './views/AppManage.vue')
   },
   {
+    path: '/e',
+    name: 'external',
+    component: () => import(/* webpackChunkName: "pages" */ './views/ExternalPage.vue')
+  },
+  {
     path: '/profile',
     name: 'profile',
     component: () => import(/* webpackChunkName: "pages" */ './views/Profile.vue')

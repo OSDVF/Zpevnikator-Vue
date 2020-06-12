@@ -15,10 +15,10 @@
       </div>
       <div class="fixed-bottom" id="bottomNav" ref="bottomNav">
         <ul id="bottomTabs" class="nav tabs nav-justified">
-          <li class="tab nav-item"><a href="#songsTab" class="active" data-target><i class="material-icons">music_note</i></a></li>
-          <li class="tab nav-item"><a href="#groupsTab" data-target><i class="material-icons">group</i></a></li>
-          <li class="tab nav-item"><a href="#playlistsTab" data-target><i class="material-icons">queue_music</i></a></li>
-          <li class="tab nav-item"><a href="#settingsTab" data-target><i class="material-icons">build</i></a></li>
+          <li class="tab nav-item"><a href="#songsTab" class="active" data-target="tooltip" title="Mé písně"><i class="material-icons">music_note</i></a></li>
+          <li class="tab nav-item"><a href="#groupsTab" data-target="tooltip" title="Skupiny"><i class="material-icons">group</i></a></li>
+          <li class="tab nav-item"><a href="#playlistsTab" data-target="tooltip" title="Playlisty"><i class="material-icons">queue_music</i></a></li>
+          <li class="tab nav-item"><a href="#settingsTab" data-target="tooltip" title="Můj profil"><i class="material-icons">person</i></a></li>
         </ul>
       </div>
     </div>
@@ -61,10 +61,12 @@
 </template>
 <script>
 import { SongDB } from "../js/databases/SongDB";
+import { SongProcessing } from "@/js/Helpers";
 import GroupsTab from "./together/GroupsTab";
 import SettingsTab from "./together/SettingsTab";
 import SongsTab from "./together/SongsTab";
 import PlaylistsTab from "./together/PlaylistsTab";
+import { UIHelpers } from "../js/Helpers";
 
 const loginFailed = "Přihlášení pomocí těchto údajů se nezdařilo!";
 export default {
@@ -74,7 +76,16 @@ export default {
 			loginInfoShow: false,
 			pendinInfo: loginFailed,
 			typedUsername: null,
-			typedPassword: null
+			typedPassword: null,
+			groups: [
+				{
+					name: "Načítání",
+					iAmAdmin: true
+				},
+				{
+					name: "Test2"
+				}
+			]
 		};
 	},
 	components: {
@@ -86,13 +97,15 @@ export default {
 	computed: {
 		loggedIn() {
 			const ret = this.$store.getters.loggedIn;
-			try{
-			if (ret == false && this.tabs) this.tabs.destroy(); //We must destroy the tabview when loggin off, otherwise it would conflict with DOM
-			}
-			catch(e){}
-			this.$store.commit("changeTitle", ret?'Můj profil':'Přihlášení');
+			try {
+				if (ret == false && this.tabs) this.tabs.destroy(); //We must destroy the tabview when loggin off, otherwise it would conflict with DOM
+			} catch (e) {}
+			this.$store.commit("changeTitle", ret ? "Mé písně" : "Přihlášení");
 			return ret;
 		}
+	},
+	created() {
+		this.themeState = false;
 	},
 	mounted() {
 		this.prevScroll = 0;
@@ -101,6 +114,9 @@ export default {
 
 		var m = $(this.$refs.main);
 		m.css("--offsetMain", m.offset().left + "px");
+	},
+	activated() {
+		this.$parent.applyThemeToChildren(); //Because tabs would stay unaffected
 	},
 	methods: {
 		onTabScroll(event) {
@@ -118,7 +134,7 @@ export default {
 			this.loginPending = true;
 			this.loginInfoShow = false;
 			var formData = new FormData(event.target);
-			fetch(process.env.VUE_APP_REMOTE_URL + "/api/auth/login.php", {
+			fetch(process.env.VUE_APP_API_URL + "/users/login.php", {
 				method: "POST",
 				body: formData
 			})
@@ -128,12 +144,20 @@ export default {
 						.then(response => {
 							if (response.status === "OK") {
 								SongDB.DeleteUserSpecificSongs(() => {
-									SongDB.downloadIndex(() => {
-										this.loginPending = false;
-										this.loginInfoShow = false;
-										this.$store.commit("logItIn", { id: response.id, credentials: response.data, name: this.typedUsername });
-										this.$nextTick(this.whileLogged);
-									});
+									this.loginPending = false;
+									this.loginInfoShow = false;
+									this.$store.commit("logItIn", { id: response.id, credentials: response.credentials, name: this.typedUsername });
+									SongDB.updateIndex(
+										response.songs,
+										() => {
+											UIHelpers.Message("Přihlášeno úspěšně");
+										},
+										() => {
+											UIHelpers.Message("Přihlášení se nezdařilo", "danger");
+										}
+									);
+
+									this.$nextTick(this.whileLogged); //Show tab layout as soon as the data are available
 								});
 								console.info("Login succesfull");
 
@@ -167,8 +191,14 @@ export default {
 				swipeable: true,
 				onShow: () => {
 					this.$refs.bottomNav.classList.remove("hidden");
+				},
+				onTabClick: a => {
+					this.$store.commit("changeTitle", a[0].title);
 				}
 			});
+		},
+		getHslColor(str) {
+			return "color:hsl(" + (SongProcessing.strHash(str) % 360) + ",54%,50%)";
 		}
 	}
 };

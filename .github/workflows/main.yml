@@ -12,10 +12,19 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: '10.x'
+        
     - name: Download
       run: npm install
+    - name: Documentation setup
+      run: npm i jsdoc vue-template-compiler jsdoc-vuejs
+      continue-on-error: true
+      
     - name: Build
       run: npm run Build-Modern
+    - name: Documentation Build
+      run: npm run Documentation
+      continue-on-error: true
+      
     - name: FTP Deploy
       uses: SamKirkland/FTP-Deploy-Action@2.0.0
       env:

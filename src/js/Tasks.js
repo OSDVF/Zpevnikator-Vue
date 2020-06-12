@@ -1,7 +1,14 @@
 import globalManager from '../js/global'
+/**
+ * User-cancelable task in the notification area
+ */
 class Task
 {
-    constructor(name, description, icon, state)
+    /**
+     * Construct new Task object
+     * @note Use Tasks.AddActive instead
+     */
+    constructor({name, description, icon, state })
     {
         this.id = null;
         this.name = name;
@@ -9,26 +16,65 @@ class Task
         this.icon = icon || 'developer_board';
         this.state = state || 'idle';
     }
+    /**
+     * Show user the notification about the task has started
+     */
     run()
     {
         this.state = 'running';
         globalManager.Vue.$store.commit('addTask', this);
     }
+    /**
+     * Show user the notification about the task has completed
+     */
     completed()
     {
-        this.state = 'completed';
+        this.isCompleted = true;
         globalManager.Vue.$emit('someTaskCompleted');
     }
+    /**
+     * Show user the notification about the task has failed
+     */
+    failed()
+    {
+        this.isFailed=true;
+        globalManager.Vue.$emit('someTaskCompleted');
+    }
+    /**
+     * Remove the task from notification area
+     */
     delete()
     {
         globalManager.Vue.$store.commit('removeTask', this.id);
     }
-}
-var Tasks = {
+    set isFailed(val)
+    {
+        this.state = val?'failed':this.state;
+    }
+    set isCompleted(val)
+    {
+        this.state = val?'completed':this.state;
+    }
     /**
-     * @type HTMLElement
+     * Gets or sets if task is in failed state
      */
-    indicatorElement: null,
+    get isFailed()
+    {
+        return this.state == 'failed'
+    }
+    /**
+     * Gets or sets if task is in completed state
+     */
+    get isCompleted()
+    {
+        return this.state == 'completed'
+    }
+}
+/**
+ * @class
+ * @classdesc Manipulate tasks in the notification area
+ */
+var Tasks = {
     assignedSureDetection: false,
     makeUserSure(event)
     {
@@ -37,9 +83,15 @@ var Tasks = {
         event.returnValue = text;
         return text;
     },
+    /**
+     * Create a new named task and show it to the user in the notification area
+     * @param {string} name Title of the task
+     * @param {string} description Text under the title
+     * @param {string} icon Material-icons string to display as the task icon
+     */
     AddActive(name, description, icon) //Returns "Task" object
     {
-        const newTask = new Task(name, description, icon);
+        const newTask = new Task({name, description, icon});
         newTask.run();
         return newTask;
         /*var nat = document.getElementById("noActiveTasks");
@@ -82,7 +134,11 @@ var Tasks = {
             }
         }*/
     },
-    Remove: function (id) //One should also delete all references to a task... (delete t;)
+    /**
+     * Make the task disappear withou user noticing anything
+     * @param {Number} id 
+     */
+    Remove(id) //One should also delete all references to a task... (delete t;)
     {
         for (var i = this.activeTasks.length - 1; i >= 0; i--)
         {
@@ -102,12 +158,21 @@ var Tasks = {
             }
         }, 500);
     },
-    Find: function (id)
+    /**
+     * Return task object by its ID
+     * @param {Number} id 
+     * @returns {Task}
+     */
+    Find(id)
     {
         for (var i = this.activeTasks.length - 1; i >= 0; i--)
             if (this.activeTasks[i].id === id) return this.activeTasks[i];
     },
-    MarkCompleted: function (id)
+    /**
+     * Show the user notification about the task has finished
+     * @param {Number} id 
+     */
+    MarkCompleted(id)
     {
         var taskItem = $("#taskList>#task-" + id);
         taskItem.find(".loading-icon").removeClass("d-none");
@@ -118,7 +183,11 @@ var Tasks = {
         Tasks.Find(id).completed = true;
         $("#clearTasks").removeClass("unopaque");
     },
-    MarkFailed: function (id)
+    /**
+     * Show the user notification about the task has failed
+     * @param {Number} id 
+     */
+    MarkFailed(id)
     {
         var taskItem = $("#taskList>#task-" + id);
         taskItem.find(".loading-icon").removeClass("d-none");
@@ -131,7 +200,10 @@ var Tasks = {
         Tasks.Find(id).failed = true;
         $("#clearTasks").removeClass("unopaque");
     },
-    ClearCompleted: function ()
+    /**
+     * Remove all already completed tasks from the notification area
+     */
+    ClearCompleted()
     {
         "use strict";
         for (var i = this.activeTasks.length - 1; i >= 0; i--)
@@ -148,6 +220,9 @@ var Tasks = {
         }
         $("#clearTasks").addClass("unopaque");
     },
+    /**
+     * Count of already completed Tasks
+     */
     get CompletedCount()
     {
         const tasks = globalManager.Vue.$store.state.tasks;
@@ -156,12 +231,15 @@ var Tasks = {
             if (tasks[i].state == 'completed') count++;
         return count;
     },
+    /**
+     * The count of ongoing tasks = total - completed - failed
+     */
     get UncompletedCount()
     {
         const tasks = globalManager.Vue.$store.state.tasks;
         var count = 0;
         for (var i = tasks.length - 1; i >= 0; i--)
-            if (tasks[i].state != 'completed') count++;
+            if (tasks[i].state != 'completed'&&tasks[i].state != 'failed') count++;
         return count;
     }
 };
