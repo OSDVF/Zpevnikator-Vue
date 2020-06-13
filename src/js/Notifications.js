@@ -1,6 +1,11 @@
-import globalManager from '../js/global'
+import globalManager from './global'
+/**
+ * @module Notifications
+ */
+
 /**
  * User-cancelable task in the notification area
+ * @hideconstructor
  */
 class Task
 {

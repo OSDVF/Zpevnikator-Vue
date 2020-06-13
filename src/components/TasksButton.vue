@@ -7,7 +7,7 @@
 
 <script>
 import { mapState } from "vuex";
-import Tasks from "../js/Tasks";
+import Tasks from "../js/Notifications";
 
 export default {
 	data() {

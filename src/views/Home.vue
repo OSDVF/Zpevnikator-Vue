@@ -24,7 +24,7 @@
       <div class="typography-caption p">
         {{stable?'Stabilní':'Experimentální'}} verze {{version}} <a href='#changes' data-toggle='collapse' class="text-visible">(poslední změna {{lastUpdate}})</a>
         <a class="p collapse" id="changes" :href="repository">
-          <pre v-html="lastChanges" class="btn-transparent d-inline-block p-3 mt-2"></pre>
+          <pre v-html="lastChanges" class="btn-transparent d-inline-block p-3 mt-2" data-toggle="tooltip" title="Klikněte pro přesměrování na GitHub, kde se dozvíte více informací o vývoji projektu"></pre>
         </a>
         <div v-if="stable">
           <br />Pokud chcete vidět nejnovější funkce, podívejte se na

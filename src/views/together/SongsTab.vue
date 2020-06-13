@@ -1,6 +1,6 @@
 <template>
   <div class="likeMain">
-    <SongList :filter="filterMySongs" :preferences="$parent.$parent.preferences" :additionalButtons="shareButton" />
+    <SongList :filter="filterMySongs" :preferences="$parent.$parent.preferences" :additionalButtons="shareButton" ref="songList" />
 	<ReloadBtn @click="refreshListClicked" shifted-up/>
 
 	<div class="d-none" ref="groupsList">
@@ -14,6 +14,7 @@ import GroupsListVue from "../../components/GroupsList.vue";
 import SongList from "@/components/SongList";
 import { UIHelpers } from '../../js/Helpers';
 import FloatingActionButton from '@/components/FloatingActionButton';
+import SyncProvider from '@/js/databases/SyncProvider.js'
 
 export default {
 	created() {
@@ -44,7 +45,7 @@ export default {
 			console.log(groupInfo);
 		},
 		refreshListClicked() {
-			SongDB.downloadIndex(this.$refs.songList.updateTable);
+			SyncProvider.pullSongs().then(this.$refs.songList.updateTable);
 		}
 	}
 };

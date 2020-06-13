@@ -1,6 +1,11 @@
 /**
+ * @module Heplers
+ */
+
+/**
  * @class
  * @classdesc API for simple network transfer with cache handling
+ * @hideconstructor
  */
 const NetworkUtils = {
 	/**
@@ -8,7 +13,7 @@ const NetworkUtils = {
 	 * @param {string} uri 
 	 * @returns {Promise<Response>}
 	 */
-	getNoCache: function (uri)
+	getNoCache(uri)
 	{
 		return fetch(uri, {
 			headers: {
@@ -21,7 +26,7 @@ const NetworkUtils = {
 	 * @param {string} uri 
 	 * @returns {Promise<Response>}
 	 */
-	revalidateCache: function (uri)
+	revalidateCache(uri)
 	{
 		return fetch(uri, {
 			headers: {
@@ -34,7 +39,7 @@ const NetworkUtils = {
 	 * @param {string} uri 
 	 * @returns {Request}
 	 */
-	noCacheRequest: function (uri)
+	noCacheRequest(uri)
 	{
 		var noCacheHead = new Headers();
 		noCacheHead.append("Cache-Control", "no-store");
@@ -70,11 +75,26 @@ const NetworkUtils = {
 			else
 				return fetch(uri);
 		})
+	},
+	/**
+	 * Converts an object with key-value pairs to a FormData
+	 * @param {Object} keyValuePairs Object to convert from
+	 * @returns {FormData}
+	 */
+	CreateBody(keyValuePairs)
+	{
+		var fd = new FormData()
+		for (var key in keyValuePairs)
+		{
+			fd.append(key, keyValuePairs[key]);
+		}
+		return fd;
 	}
 }
 /**
  * @class
  * @classdesc Manipulate HTML song data
+ * @hideconstructor
  */
 const SongProcessing = {
 	anchorsPattern: /\d(?:\)|\.|x|:)|bridge|coda|intro|outro|sloka|mezihra|předehra|dohra|\/:|:\/|refren|refrén|ref:|ref\.:|ref\./gmi,
@@ -84,7 +104,7 @@ const SongProcessing = {
 	 */
 	createGetSongUrl(id)
 	{
-		return process.env.VUE_APP_API_URL+'/songs/get.php?id='+id;
+		return process.env.VUE_APP_API_URL + '/songs/get.php?id=' + id;
 	},
 	makeRightSequencesBold: function (text)
 	{
@@ -236,6 +256,7 @@ const SongProcessing = {
 /**
  * @class
  * @classdesc Generate files from various data
+ * @hideconstructor
  */
 const IOUtils = {
 	CreateTxtBlob: function (txt)
@@ -263,6 +284,7 @@ const IOUtils = {
 /**
  * @class
  * @classdesc Data conversion utilities
+ * @hideconstructor
  */
 const DataUtils = {
 	urlB64ToUint8Array(base64String)
@@ -288,6 +310,7 @@ const DataUtils = {
  * @todo Use the Wakelock API instead when it will be available
  * @class
  * @classdesc Helper for the NoSleep library
+ * @hideconstructor
  */
 const NoSleepHelper = {
 	_nosleep: null,
@@ -312,6 +335,7 @@ const NoSleepHelper = {
 /**
  * @class
  * @classdesc Show various procedural UI elements
+ * @hideconstructor
  */
 const UIHelpers = {
 	store: null,
@@ -471,6 +495,7 @@ const UIHelpers = {
 /**
  * @class
  * @classdesc Get info about user's device and browser
+ * @hideconstructor
  */
 const Environment = {
 	isMobile:
@@ -510,18 +535,30 @@ const Environment = {
 
 }
 /**
- * Enum. All the possible states of underlying serviceWorker
+ * All the possible states of underlying serviceWorker
  * @typedef WorkerStates
- * @property dead 0
- * @property ready 1
- * @property registered 2
- * @property downloadingLocal 3
- * @property downloadedLocal 4
- * @property downloadingExternal 5
- * @property downloadedExternal 6
- * @property essential_ok 7
+ * @readonly
+ * @enum
+ * @property dead 0 The device does not support SWs
+ * @property ready 1 Device supports it
+ * @property registered 2 SW is registered
+ * @property downloadingLocal 3 Download and cache operation pending
+ * @property downloadedLocal 4 All Vue.js files and internal assets are cached
+ * @property downloadingExternal 5 Caching external libraries, fonts...
+ * @property downloadedExternal 6 Everything neccessary is in cache
+ * @property essential_ok 7 An attempt to download and cache something was made, but everytinh is ok already
  */
-const WorkerStates = Object.freeze({ 'dead': 0, 'ready': 1, 'registered': 2, 'downloadingLocal': 3, 'downloadedLocal': 4, 'downloadingExternal': 5, 'downloadedExternal': 6, 'essential_ok': 7 })
+
+const WorkerStates = Object.freeze({
+	dead: 0,
+	ready: 1,
+	registered: 2,
+	downloadingLocal: 3,
+	downloadedLocal: 4,
+	downloadingExternal: 5,
+	downloadedExternal: 6,
+	essential_ok: 7
+})
 export
 {
 	NetworkUtils,

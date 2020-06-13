@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import UserStoredInfo from '../js/databases/UserInfo';
 
 Vue.use(Vuex)
 
@@ -34,6 +33,7 @@ export default new Vuex.Store({
     modalsCount: 1,
     loginState: {
       name: null,
+      fullName: null,
       id: null,
       credentials: null
     },
@@ -72,12 +72,6 @@ export default new Vuex.Store({
     },
     logItIn(state, lState)
     {
-      UserStoredInfo.ID = lState.id;
-      UserStoredInfo.Name = lState.name;
-      UserStoredInfo.Credentials = lState.credentials;
-
-      if (typeof Together != 'undefined') Together(); //Initialize Zpěvníkátor Together API
-
       if (typeof Sentry != 'undefined')//If we have a Sentry, inform it about user
         Sentry.configureScope(function (scope)
         {
@@ -135,23 +129,6 @@ export default new Vuex.Store({
     loggedIn(state)
     {
       return state.loginState.name != null;
-    }
-  },
-  /**
-   * Actions that change current AppState.
-   * Use them externally as you wish
-   * @example
-   * $store.dispatch('actionName')
-   * 
-   * @name actions
-   * @property logout Log current user out
-   * @memberof VuexStore
-   */
-  actions: {
-    logout(store)
-    {
-      store.commit('logItIn', { name: null, id: null, credentials: null });
-      UserStoredInfo.Delete();
     }
   },
   modules: {

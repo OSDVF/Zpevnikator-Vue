@@ -1,4 +1,4 @@
-import Tasks from '../Tasks'
+import Tasks from '../Notifications'
 import Vue from 'vue'
 import
 {
@@ -21,12 +21,13 @@ const buildNumber = process.env.VUE_APP_DB_BUILDNUMBER
 /**
  * A song database based on indexedDB
  * @class
+ * @hideconstructor
  */
 const SongDB = {
     eventBus: new Vue(),
     updatingIndex: false,
     pendingDBRequests: [],
-    cacheName:process.env.VUE_APP_SONG_DB_NAME,
+    cacheName: process.env.VUE_APP_SONG_DB_NAME,
     onmessage: console.log,
     /**
      * Returns CacheStorage that is assigned to be the place to store downloaded offline songs
@@ -34,14 +35,17 @@ const SongDB = {
      */
     openCache()
     {
-        if('caches' in window)
+        if ('caches' in window)
         {
             return caches.open(this.cacheName);
         }
-        this.onmessage('Nelze otevřít offline databázi písní','warning');
+        this.onmessage('Nelze otevřít offline databázi písní', 'warning');
         return Promise.reject();
     },
-    downloadIndex(callback)
+    /**
+     * Requests the backend API for a public version of the song index and updates the local database with its values
+     */
+    downloadPublicIndex(callback)
     {
         let createIndexTask;
         SongDB.onmessage("Aktualizace indexu písní...", null, 2000);
@@ -74,7 +78,7 @@ const SongDB = {
         })
     },
     /**
-     * Updates the client mirror of the database
+     * Updates the client mirror of the database with values of an array
      * @param {SongInfo[]} songArray
      * @param {Function} onerror
      * @param {Function} oncomplete
@@ -128,11 +132,13 @@ const SongDB = {
                 console.warn(e);
             }
         }
-        SongDB.write(executeDBTask, null, () => {
+        SongDB.write(executeDBTask, null, () =>
+        {
             SongDB.updatingIndex = false;
             SongDB.eventBus.$emit("indexUpdated");
             if (oncomplete) oncomplete()
-        }, () => {
+        }, () =>
+        {
             if (onerror) onerror()
         });
     },
@@ -226,7 +232,7 @@ const SongDB = {
                     if (this.updatingIndex)
                         this.eventBus.$on("indexUpdated", clb);
                     else
-                        this.downloadIndex(clb);
+                        this.downloadPublicIndex(clb);
                     return;
                 }
                 else if (resolve) resolve(target.result)
@@ -454,7 +460,7 @@ const SongDB = {
                     }
                     console.log("Created song index DB");
                     if (!SongDB.updatingIndex)
-                        SongDB.downloadIndex(() =>
+                        SongDB.downloadPublicIndex(() =>
                         {
                             for (let i = 0; i < _class.pendingDBRequests.length; i++)
                                 _class.pendingDBRequests.pop()(_class.db);
@@ -523,12 +529,12 @@ const SongDB = {
                     }
                     cursor.continue();
                 } else
-                    callback(true);
+                    if (callback) callback(true);
             };
             request.onerror = function (event)
             {
                 console.error("Error reading songs from DB ", event);
-                callback(false);
+                if (callback) callback(false);
             }
         })
     },

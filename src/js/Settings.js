@@ -239,6 +239,7 @@ class SongCustomization
 /**
  * @class
  * @classdesc Holds current user configuration objects
+ * @hideconstructor
  */
 var Settings = {
 	_preferences: new Preferences(),

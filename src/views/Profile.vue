@@ -2,16 +2,16 @@
   <main ref="main">
     <div v-show="loggedIn" style="position: absolute; left: 0px; right: 0px; bottom: 0px; top: 0px;">
       <div id="songsTab">
-        <songs @scroll.passive="onTabScroll" />
+        <songs @scroll.passive="onTabScroll" ref="songsTab" />
       </div>
       <div id="groupsTab">
-        <groups @scroll.passive="onTabScroll" />
+        <groups @scroll.passive="onTabScroll" ref="groupsTab" />
       </div>
       <div id="playlistsTab">
-        <playlists @scroll.passive="onTabScroll" />
+        <playlists @scroll.passive="onTabScroll" ref="playlistsTab" />
       </div>
       <div id="settingsTab">
-        <settings @scroll.passive="onTabScroll" />
+        <settings @scroll.passive="onTabScroll" ref="settingsTab" />
       </div>
       <div class="fixed-bottom" id="bottomNav" ref="bottomNav">
         <ul id="bottomTabs" class="nav tabs nav-justified">
@@ -67,6 +67,7 @@ import SettingsTab from "./together/SettingsTab";
 import SongsTab from "./together/SongsTab";
 import PlaylistsTab from "./together/PlaylistsTab";
 import { UIHelpers } from "../js/Helpers";
+import SyncProvider from "../js/databases/SyncProvider";
 
 const loginFailed = "Přihlášení pomocí těchto údajů se nezdařilo!";
 export default {
@@ -134,53 +135,23 @@ export default {
 			this.loginPending = true;
 			this.loginInfoShow = false;
 			var formData = new FormData(event.target);
-			fetch(process.env.VUE_APP_API_URL + "/users/login.php", {
-				method: "POST",
-				body: formData
-			})
-				.then(result => {
-					result
-						.json()
-						.then(response => {
-							if (response.status === "OK") {
-								SongDB.DeleteUserSpecificSongs(() => {
-									this.loginPending = false;
-									this.loginInfoShow = false;
-									this.$store.commit("logItIn", { id: response.id, credentials: response.credentials, name: this.typedUsername });
-									SongDB.updateIndex(
-										response.songs,
-										() => {
-											UIHelpers.Message("Přihlášeno úspěšně");
-										},
-										() => {
-											UIHelpers.Message("Přihlášení se nezdařilo", "danger");
-										}
-									);
+			SyncProvider.tryLogIn(formData)
+				.then(response => {
+					if (response.status === "OK") {
+						this.loginPending = false;
+						this.loginInfoShow = false;
+						this.$nextTick(this.whileLogged); //Show tab layout as soon as the data are available
+					} else {
+						console.warn("Login failed");
 
-									this.$nextTick(this.whileLogged); //Show tab layout as soon as the data are available
-								});
-								console.info("Login succesfull");
-
-								this.pendinInfo = "Čekání na informace o účtu....";
-								this.loginInfoShow = true;
-							} else {
-								console.warn("Login failed");
-
-								this.loginInfoShow = true;
-								this.loginPending = false;
-								this.pendinInfo = loginFailed;
-							}
-						})
-						.catch(e => {
-							if (typeof Sentry != "undefined") Sentry.captureException(e);
-							this.pendinInfo = "Nepodařilo se přečíst odpověď serveru";
-
-							this.loginPending = false;
-							this.loginInfoShow = true;
-						});
+						this.loginPending = false;
+						this.pendinInfo = loginFailed;
+						this.loginInfoShow = true;
+					}
 				})
-				.catch(() => {
-					this.pendinInfo = "Připojení se nezdařilo";
+				.catch(e => {
+					if (typeof Sentry != "undefined") Sentry.captureException(e);
+					this.pendinInfo = "Nepodařilo se připojit k serveru";
 
 					this.loginPending = false;
 					this.loginInfoShow = true;
@@ -189,8 +160,13 @@ export default {
 		whileLogged() {
 			this.tabs = M.Tabs.init(document.getElementById("bottomTabs"), {
 				swipeable: true,
-				onShow: () => {
+				onShow: someTabElement => {
 					this.$refs.bottomNav.classList.remove("hidden");
+					try {
+						this.$refs[someTabElement.id].shown();
+					} catch (e) {
+						console.log(e);
+					}
 				},
 				onTabClick: a => {
 					this.$store.commit("changeTitle", a[0].title);

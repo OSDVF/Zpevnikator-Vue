@@ -29,6 +29,9 @@
 const language = require("@/assets/Czeski.json");
 import { SongProcessing, UIHelpers } from "@/js/Helpers.js";
 import { SongDB } from "@/js/databases/SongDB.js";
+import SyncProvider from "@/js/databases/SyncProvider";
+import globalManager from "@/js/global";
+import GlobalEvents from "../js/GlobalEvents";
 /**
  * @callback FilterFunction
  * @param {SongInfo} songInfo
@@ -43,7 +46,7 @@ import { SongDB } from "@/js/databases/SongDB.js";
  * @property {EventHandler} onClick
  */
 /**
- * Displays a table of songs from the SongDB
+ * Displays a table of songs from the SongDB. If no songs are found, index download starts automatically
  * @vue-prop {FilterFunction} [filter] Pass a filtering function here
  * @vue-prop {AdditionalButton} [additionalButtons] Buttons in the 'Action' collumn
  * @vue-prop {Preferences} preferences Preferences object that says how to compose the table (multipage? with tooltips?)
@@ -82,7 +85,7 @@ export default {
 			dom: '<"table-scroller"t>ip',
 			language: language,
 			initComplete: function() {
-				SongDB.eventBus.$on("indexUpdating", () => {
+				SyncProvider.eventBus.$on(GlobalEvents.pullStarted, () => {
 					$(".dataTables_empty").html("Počkejte na stažení indexu...&ensp;<i class='material-icons rotating'>autorenew</i>");
 				});
 				//window.tableWraperElement = $("#wpsongbook_list_wrapper");
@@ -91,38 +94,40 @@ export default {
 				if (_class.cursorEnded) {
 					//Now The table IS filled with values
 					if (!_class.preferences.Optimizations) {
-						$(".imp")
-							.parent()
-							.parent()
-							.tooltip({ title: "Importovaná píseň" });
-						$(".draft")
-							.parent()
-							.parent()
-							.tooltip({
-								title: "Online jen pro vás, čekající na publikaci"
-							});
-						$(".pending")
-							.parent()
-							.parent()
-							.tooltip({ title: "Čekající na schválení" });
-						$(".future")
-							.parent()
-							.parent()
-							.tooltip({
-								title: "Bude publikován v budoucnosti"
-							});
-						$(".private")
-							.parent()
-							.parent()
-							.tooltip({ title: "Soukromá" });
-						$(".publish")
-							.parent()
-							.parent()
-							.tooltip({ title: "Vámi publikováno" });
-						$(".oonly")
-							.parent()
-							.parent()
-							.tooltip({ title: "Jen v offline databázi" });
+						globalManager.resourcesReady(this, () => {
+							$(".imp")
+								.parent()
+								.parent()
+								.tooltip({ title: "Importovaná píseň" });
+							$(".draft")
+								.parent()
+								.parent()
+								.tooltip({
+									title: "Online jen pro vás, čekající na publikaci"
+								});
+							$(".pending")
+								.parent()
+								.parent()
+								.tooltip({ title: "Čekající na schválení" });
+							$(".future")
+								.parent()
+								.parent()
+								.tooltip({
+									title: "Bude publikován v budoucnosti"
+								});
+							$(".private")
+								.parent()
+								.parent()
+								.tooltip({ title: "Soukromá" });
+							$(".publish")
+								.parent()
+								.parent()
+								.tooltip({ title: "Vámi publikováno" });
+							$(".oonly")
+								.parent()
+								.parent()
+								.tooltip({ title: "Jen v offline databázi" });
+						});
 					}
 					var lastListScroll = localStorage.getItem(_class.$route.name + "lastListScroll");
 					if (lastListScroll)
@@ -136,13 +141,16 @@ export default {
 		});
 
 		_class.updateTable();
+		SyncProvider.eventBus.$on(GlobalEvents.indexUpdated, () => {
+			_class.updateTable();
+		});
 	},
-	beforeDestroy() {
-		try {
-			$("tr i").toolitp("dispose"); //If we don't destroy the tooltip, it would persist for ever
-		} catch (e) {
-			//No toolitps existed
-		}
+	activated() {
+		$(this.$el)
+			.find("tr i")
+			.parent()
+			.parent()
+			.tooltip("enable").tooltip("update");
 	},
 	methods: {
 		tableClick(e) {
@@ -150,6 +158,11 @@ export default {
 			if (e.target && e.target.nodeName == "TD" && e.target.parentElement.nodeName == "TR") {
 				var sId = e.target.parentElement.attributes["href"].value;
 				localStorage.setItem(this.$route.name + "lastListScroll", document.documentElement.scrollTop);
+				$(this.$el)
+					.find("tr i")
+					.parent()
+					.parent()
+					.tooltip("disable");
 				if (sId) this.$router.push({ name: "song", query: { id: sId } });
 				return false;
 			}
@@ -236,9 +249,10 @@ export default {
 								else processRow(null, processedEntries);
 								cursor.continue();
 							} else if (!processedEntries) {
+								//If no songs are found
 								setTimeout(function() {
-									if (!SongDB.updatingIndex) {
-										SongDB.downloadIndex();
+									if (!SyncProvider.pullInProgress) {
+										SyncProvider.pullSongs();
 									}
 									$(".dataTables_empty").html("Počkejte na stažení indexu...&ensp;<i class='material-icons rotating'>autorenew</i><br><a href='offline'>Stáhnout manuálně</a>");
 									window.waitingForIndex = true;

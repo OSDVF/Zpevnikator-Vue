@@ -164,7 +164,8 @@ import { Environment, UIHelpers, SongProcessing, WorkerStates, NetworkUtils } fr
 import { SongDB } from "../js/databases/SongDB";
 import globalManager from "@/js/global";
 import CheckLoadingIconVue from "../components/CheckLoadingIcon.vue";
-import Tasks from "../js/Tasks";
+import Tasks from "../js/Notifications";
+import SyncProvider from "../js/databases/SyncProvider"
 export default {
 	data() {
 		return {
@@ -509,7 +510,7 @@ export default {
 			}
 		},
 		updateIndex() {
-			SongDB.downloadIndex();
+			SyncProvider.pull();
 		},
 		checkDownloadedSongs(onlyInfo) {
 			return caches
@@ -525,13 +526,13 @@ export default {
 
 									if (countRequest.result !== 0 && keys.length >= countRequest.result) this.allSongsDown = true;
 									else if (!onlyInfo && navigator.onLine && diff > 86400) {
-										SongDB.downloadIndex(() => this.checkDownloadedSongs(true));
+										SyncProvider.pullSongs().then(() => this.checkDownloadedSongs(true));
 									}
 									this.downloadedSongs = keys.length;
 									this.totalSongs = countRequest.result;
 								};
 							} else if (SongDB.requestingDB) {
-								SongDB.downloadIndex(this.checkDownloadedSongs);
+								SyncProvider.pullSongs(this.checkDownloadedSongs);
 							} //message("Fatální chyba při práci s databází. Vymažte prosím všechna data aplikace","danger",7000,true);
 							else throw "deleteDB";
 						});

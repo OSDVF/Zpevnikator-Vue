@@ -60,9 +60,12 @@
 
 <script>
 import Settings from "./js/Settings";
-import TasksButton from './components/TasksButton';
+import TasksButton from "./components/TasksButton";
 import { UIHelpers, Environment } from "./js/Helpers";
-
+import globalManager from "./js/global";
+/**
+ * @todo Emoji fonts
+ */
 export default {
 	data: function() {
 		return {
@@ -155,6 +158,14 @@ export default {
 					_class.localHistory.push(to.path);
 				}
 			}
+			//We want to destroy all the tooltips on previous page
+			$(this.$refs.mainContent)
+				.find('[data-toggle="tooltip"],.tooltip')
+				.tooltip("dispose");
+			$("tr i")
+				.parent()
+				.parent()
+				.tooltip("hide");
 			next();
 		});
 		var navCollapse = $(this.$refs.navCollapse);
@@ -174,7 +185,12 @@ export default {
 			$(this.$refs.navCollapse).collapse("hide");
 		},
 		applyThemeToChildren() {
-			Settings.applyThemeToComponents($(this.$refs.mainContent));
+			globalManager.resourcesReady(this, () => {
+				var $mainContent = $(this.$refs.mainContent);
+				Settings.applyThemeToComponents($mainContent);
+				//Also apply tooltips
+				$mainContent.find('[data-toggle="tooltip"]').tooltip();
+			});
 		},
 		setOverflow() {
 			this.$refs.mainContent.style.overflow = "hidden";

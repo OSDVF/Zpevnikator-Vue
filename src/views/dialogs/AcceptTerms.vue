@@ -20,7 +20,7 @@
             </div>
             <p></p>
             <p>
-              <a href="#" id="ttAnchor1" data-toggle="tooltip" data-container="#ttAnchor1" title="K uložení nastavení a přizpůsobení aplikace (transpozice akordů, barva na pozadí...)">Proč je používáme?</a>
+              <a class="text-secondary" id="ttAnchor1" data-toggle="tooltip" data-container="#ttAnchor1" title="K uložení nastavení a přizpůsobení aplikace (transpozice akordů, barva na pozadí...)">Proč je používáme?</a>
             </p>
             <input type="submit" class="btn btn-secondary" aria-label="OK" value="OK" />
           </form>

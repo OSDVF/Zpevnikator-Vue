@@ -1,11 +1,12 @@
 //Includes all the global hooks for external scripts which should be executed after DOM load
 
 import { UIHelpers, Environment, WorkerStates } from './Helpers'
-import Tasks from './Tasks'
+import Tasks from './Notifications'
 var pendingReady = [];
 /**
  * @class
  * @classdesc Global object that holds application-wide resources
+ * @hideconstructor
  */
 const manager = {
     /**

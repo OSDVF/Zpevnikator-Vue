@@ -2,50 +2,38 @@
 import Settings from '../Settings'
 
 /**
+ * @interface UserInfo
+ * Interface for user information exchange
+ * @property {string} name Aka "username"
+ * @property {string} fullName E.g. John Doe
+ * @property {Number} id
+ * @property {string} avatar Url to the avatar image
+ */
+
+/**
  * Access information about logged user
  * @class
+ * @hideconstructor
+ * @implements UserInfo
  */
 var UserStoredInfo = {
-    BindCheckbox: function (element, settingName, changed)
-    {
-        var initialVal = UserStoredInfo[settingName];
-        if (initialVal.then)
-        {
-            initialVal.then(function (value)
-            {
-                element.checked = value;
-                element.addEventListener('change', function ()
-                {
-                    UserStoredInfo[settingName] = element.checked;
-                    if (changed) changed(element.checked);
-                });
-            })
-        } else
-        {
-            element.checked = initialVal;
-            element.addEventListener('change', function ()
-            {
-                UserStoredInfo[settingName] = element.checked;
-                if (changed) changed(element.checked);
-            });
-        }
-    },
     /**
      * Name and ID
      */
     get Info()
     {
         return {
-            name: this.Name,
-            id: this.ID
+            name: this.name,
+            id: this.id,
+            fullName: this.fullName
         }
     },
     /**
      * Credentials hash, used for server-side authentification
      * @type string
      */
-    get Credentials() { return localStorage.getItem(Settings.KeyPrefix + "loginCredentials") },
-    set Credentials(val)
+    get credentials() { return localStorage.getItem(Settings.KeyPrefix + "loginCredentials") },
+    set credentials(val)
     {
         localStorage[Settings.KeyPrefix + "loginCredentials"] = val
     },
@@ -53,15 +41,15 @@ var UserStoredInfo = {
      * Wordpress-side ID
      * @type Number
      */
-    get ID()
+    get id()
     {
         return localStorage.getItem(Settings.KeyPrefix + "userID");
     },
-    set ID(val)
+    set id(val)
     {
         localStorage.setItem(Settings.KeyPrefix + "userID", val);
     },
-    set Name(val)
+    set name(val)
     {
         localStorage[Settings.KeyPrefix + "userName"] = val;
     },
@@ -69,9 +57,21 @@ var UserStoredInfo = {
      * Username (not full name)
      * @type string
      */
-    get Name()
+    get name()
     {
         return localStorage.getItem(Settings.KeyPrefix + "userName");
+    },
+    set fullName(val)
+    {
+        localStorage[Settings.KeyPrefix + "fullName"] = val;
+    },
+    /**
+     * E.g. John doe
+     * @type string
+     */
+    get fullName()
+    {
+        return localStorage.getItem(Settings.KeyPrefix + "fullName");
     },
     /**
      * Checks if there is any credentials hash in device storage
@@ -89,46 +89,4 @@ var UserStoredInfo = {
     }
 
 };
-Object.defineProperties(UserStoredInfo, {
-    /**
-     * @todo Notes should be implemented as Zpěvníkátor-Together module
-     */
-    SyncNotes: {
-        get: function ()
-        {
-            return new Promise(function (res, rej)
-            {
-                NetworkUtils.getNoCache("/api/userinfo.php?get=syncNotes").done(function (response)
-                {
-                    if (response == "true")
-                        localStorage.setItem(Settings.KeyPrefix + 'user_syncNotes', true);
-                    else if (response == "false")
-                        localStorage.setItem(Settings.KeyPrefix + 'user_syncNotes', false);
-                    res(response == "true");
-                }).fail(function ()
-                {
-                    rej(localStorage.getItem(Settings.KeyPrefix + 'user_syncNotes') != "false")
-                })
-            })
-        },
-        set: function (mode)
-        {
-            localStorage.setItem(Settings.KeyPrefix + 'user_syncNotes', mode);
-            return new Promise(function (res, rej)
-            {
-                NetworkUtils.getNoCache("/api/userinfo.php?set=syncNotes&value=" + mode.toString()).done(function (response)
-                {
-                    if (response == "true")
-                        res(true);
-                    else if (response == "false")
-                        rej(true);
-                    else rej(false)
-                }).fail(function ()
-                {
-                    rej(false)
-                })
-            })
-        }
-    },
-})
 export default UserStoredInfo;

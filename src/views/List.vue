@@ -12,8 +12,8 @@
 </template>
 <script>
 import SongList from "@/components/SongList";
-import { SongDB } from "@/js/databases/SongDB.js";
 import FloatingActionButton from '../components/FloatingActionButton';
+import SyncProvider from "../js/databases/SyncProvider"
 
 export default {
 	methods: {
@@ -21,7 +21,7 @@ export default {
 			document.getElementById("offlineInfo").classList.remove("d-none");
 		},
 		refreshListClicked() {
-			SongDB.downloadIndex(this.$refs.songList.updateTable);
+			SyncProvider.pull().then(this.$refs.songList.updateTable);
 		}
 	},
 	components: {
@@ -40,7 +40,7 @@ export default {
 		next(vm => {
 			if ((!from || !from.name) && performance.navigation.type == 1) {
 				//Page was reloaded
-				this.refreshListClicked();
+				vm.refreshListClicked();
 			}
 		});
 	}
