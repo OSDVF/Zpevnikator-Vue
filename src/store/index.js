@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import { Environment } from '../js/Helpers';
 
 Vue.use(Vuex)
 
@@ -16,7 +17,7 @@ Vue.use(Vuex)
  * The Vuex state object
  * @typedef AppState
  * @property {string} title Title currently shown in navbar and the browser window header
- * @property {WorkerState} workerState State of currently registered ServiceWorker
+ * @property {WorkerStates} workerState State of currently registered ServiceWorker
  * @property {Number} modalsCount Internal number of currently shown modal dialogs
  * @property {LoginState} loginState Info about currently logged user
  * @property {Task[]} tasks List of currently ongoing tasks (also the completed ones)
@@ -37,6 +38,7 @@ export default new Vuex.Store({
       id: null,
       credentials: null
     },
+    insidePWA: Environment.InsidePwa == true,
     tasks: []
   },
   /**
@@ -47,7 +49,7 @@ export default new Vuex.Store({
    * @name mutations
    * @memberof VuexStore
    * @property {string} changeTitle Changes the title displayed in navbar and broser tab header
-   * @property {WorkerState} workerState Internal method to update current serviceWorker state info
+   * @property {WorkerStates} workerState Internal method to update current serviceWorker state info
    * @property addDialog Prepare new Dialog object for displaying
    * @property removeDialog
    * @property {LoginState} logItIn Update info about currently logged user
@@ -114,6 +116,10 @@ export default new Vuex.Store({
         if (state.tasks[i].id == id)
           state.tasks.splice(i, 1);
       }
+    },
+    insidePWA(state, isInstalled)
+    {
+      state.insidePWA = isInstalled;
     }
   },
   /**

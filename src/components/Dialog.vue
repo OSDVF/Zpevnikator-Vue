@@ -24,6 +24,7 @@
 <script>
 import { UIHelpers } from "../js/Helpers";
 import Settings from "../js/Settings";
+import GlobalEvents from "../js/GlobalEvents";
 /**
  * Internal helper object for displaying dialogs. Use UIHelpers.Dialog() to instantiate one
  * @vue-prop {string|HTMLElement} text Can contain text to display or a element to paste (not copy!) into the body of the dialog
@@ -71,7 +72,10 @@ export default {
 		setData(text, callback, type, header, footer, positiveEventListener) {
 			if (typeof text == "string") this.textData = text;
 			else if (text instanceof Node) this.$refs.innerContent.append(text);
-			this.click = callback;
+			this.click = () => {
+				callback();
+				this.$root.$emit(GlobalEvents.dialogClosed);
+			};
 			this.typeData = type;
 			this.headerData = header;
 			this.footerData = footer;

@@ -23,16 +23,13 @@ if (process.env.NODE_ENV === 'production' || process.env.VUE_APP_SWDEBUG)
       for (var clb of globalManager.workerReadyWaiting)
         clb();
     },
-    /*cached () {
-      console.log('Precache completed.')//This is fake event in my opinion
-    },*/
     updatefound()
     {
       console.log('New content is downloading.')
     },
     updated()
     {
-      console.log('New content is available; please refresh.')
+      globalManager.swUpdated = true;
     },
     offline()
     {

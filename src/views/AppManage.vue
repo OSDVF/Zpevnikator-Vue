@@ -183,6 +183,10 @@ export default {
 		workerState()
 		{
 			return this.$store.state.workerState;
+		},
+		insidePwa()
+		{
+			return this.$store.state.insidePwa;
 		}
 	},
 	components: {
@@ -190,7 +194,6 @@ export default {
 	},
 	created() {
 		this.version = process.env.VUE_APP_VERSION;
-		this.insidePwa = Environment.InsidePwa == true;
 	},
 	mounted() {
 		"use strict";

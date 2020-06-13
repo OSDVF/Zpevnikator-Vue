@@ -32,10 +32,13 @@
 <script>
 import Settings from "../../js/Settings";
 import globalManager from "@/js/global";
+import { UIHelpers } from '../../js/Helpers';
+import GlobalEvents from '../../js/GlobalEvents';
 export default {
 	mounted() {
 		globalManager.resourcesReady(this, () => {
-			$("#cookieRequest").modal("show");
+      $("#cookieRequest").modal("show");
+      UIHelpers.currentlyDisplayedDialogs++;
 			$("#ttAnchor1").tooltip();
 		});
 	},
@@ -43,7 +46,10 @@ export default {
 		onSubmit(event) {
 			event.preventDefault();
 			$("#cookieRequest").modal("hide");
-			Settings.Preferences.CookiesAccepted = true;
+      Settings.Preferences.CookiesAccepted = true;
+      //Inform UI provider that we have been closed
+      UIHelpers.currentlyDisplayedDialogs--;
+      this.$root.$emit(GlobalEvents.dialogClosed);
 		}
 	}
 };

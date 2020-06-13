@@ -2,6 +2,9 @@
  * @module Heplers
  */
 
+import GlobalEvents from "./GlobalEvents";
+import manager from "./global";
+
 /**
  * @class
  * @classdesc API for simple network transfer with cache handling
@@ -338,8 +341,8 @@ const NoSleepHelper = {
  * @hideconstructor
  */
 const UIHelpers = {
-	store: null,
 	dialogResult: null,
+	currentlyDisplayedDialogs: 0,
 	DialogType: Object.freeze({
 		"Ok": 1,
 		"OkCancel": 2,
@@ -370,12 +373,26 @@ const UIHelpers = {
 	 */
 	Dialog(text, callback, type = UIHelpers.DialogType.Ok, header, footer, positiveEventListener)
 	{
-		UIHelpers.store.commit('addDialog');
-		if (!callback) callback = new Function();
+		manager.Vue.$store.commit('addDialog');
 		if (!positiveEventListener) positiveEventListener = new Function();
-		const newDialog = UIHelpers.appReferences['dialog' + (UIHelpers.store.state.modalsCount - 1)][0];//Because Vuex's reaction to commit is too sloow sometimes
-		newDialog.setData(text, callback, type, header, footer, positiveEventListener);
+		const newDialog = UIHelpers.appReferences['dialog' + (manager.Vue.$store.state.modalsCount - 1)][0];//Because Vuex's reaction to commit is too sloow sometimes
+		newDialog.setData(text, () =>
+		{
+			this.currentlyDisplayedDialogs--;
+			if (callback) callback()
+		}, type, header, footer, positiveEventListener);
+		this.currentlyDisplayedDialogs++;
 		newDialog.show();
+	},
+	WaitForAllDialogsClose()
+	{
+		if (!this.currentlyDisplayedDialogs)
+			return Promise.resolve()
+		return new Promise((res) => manager.Vue.$on(GlobalEvents.dialogClosed, () =>
+		{
+			if (!this.currentlyDisplayedDialogs)
+				res()
+		}));
 	},
 	pendingMessages: [],
 	placeSnackbar($snackbar, text, type, timeout, multiline)

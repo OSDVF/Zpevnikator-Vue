@@ -23,6 +23,8 @@ var GlobalEvents =
     loggedIn: "loggedIn",
     /** A user has logged out */
     loggedOut: "loggedOut",
+    /** Any dialog has been closed */
+    dialogClosed: "dialogClosed",
 };
 Object.freeze(GlobalEvents);
 export default GlobalEvents;

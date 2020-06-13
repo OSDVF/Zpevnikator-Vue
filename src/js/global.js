@@ -16,7 +16,6 @@ const manager = {
     set Vue(to)
     {
         this._vue = to;
-        UIHelpers.store = to.$store;
     },
     /**
      * Return global application instance
@@ -67,26 +66,23 @@ const manager = {
         {
             function doTheInstallation()
             {
-                if (deferredPrompt)
+                if (manager.deferredPrompt)
                 {
-                    $("#offlineEnable").html("Instalace...");
-                    deferredPrompt.prompt();
+                    manager.deferredPrompt.prompt();
                     // Wait for the user to respond to the prompt
-                    deferredPrompt.userChoice.then(function (choiceResult)
+                    manager.deferredPrompt.userChoice.then(function (choiceResult)
                     {
                         if (choiceResult.outcome === 'accepted')
                         {
-                            $("#offlineEnable").html("Aplikace nainstalována");
+                            manager.Vue.$store.commit('insidePWA',true);
                         } else
                         {
-                            $("#offlineEnable").html("Stáhnout aplikaci");
+                            manager.Vue.$store.commit('insidePWA',false);
                         }
-                        disableProgressIndicator("#installation");
                     });
                 }
                 else
                 {
-                    disableProgressIndicator("#installation");
                     $("#manualInstallPrompt").modal("show");
                 }
             }
@@ -346,6 +342,8 @@ function setupSWMessageBus()
                 window.open(event.data.url);
                 break;
             case "caching_state_changed":
+                if (manager.Vue.$store.state.workerState == event.data.actualState)
+                    break;//If nothing has changed, do nothing
                 manager.Vue.$store.commit('workerState', event.data.actualState);
                 switch (event.data.actualState)
                 {
@@ -367,9 +365,15 @@ function setupSWMessageBus()
                         break;
                     case WorkerStates.downloadedExternal:
                         UIHelpers.Message("Rozšířené soubory staženy", "success", 2000);
-                        if (manager.deferredPrompt && navigator.onLine)//Pro jistotu, nikdy nevíme jestli 
+                        if (manager.swUpdated)
+                            UIHelpers.Dialog("Je k dispozici nová verze aplikace. Chcete ji nyní instalovat? <br><span class='text-muted'>(Jinak bude instalována po příštím načtení aplikace)</span>", null, UIHelpers.DialogType.YesNo, "Aktualizace", null, () =>
+                            {
+                                location.reload();
+                            })
+                        else if (manager.deferredPrompt && navigator.onLine)//Pro jistotu, nikdy nevíme jestli 
                         {
-                            UIHelpers.Dialog("Zpěvníkátor je možné instalovat jako klasickou aplikaci na vaše zařízení. Budete tam ke všem písním mít snadný offline přístup.<br>Nyní je aplikace zpěvníku připravena k instalaci. Chcete ji instalovat?", null, UIHelpers.DialogType.YesNo, "Aplikace připravena", null, manager.appDownload);
+                            UIHelpers.WaitForAllDialogsClose().then(() =>
+                                UIHelpers.Dialog("Zpěvníkátor je možné instalovat jako klasickou aplikaci na vaše zařízení. Budete tam ke všem písním mít snadný offline přístup.<br>Nyní je aplikace zpěvníku připravena k instalaci. Chcete ji instalovat?", null, UIHelpers.DialogType.YesNo, "Aplikace připravena", null, manager.appDownload));
                         }
                         if (manager.dowTsk)
                             manager.dowTsk.completed();
