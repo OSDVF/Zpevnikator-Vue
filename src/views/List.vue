@@ -21,7 +21,7 @@ export default {
 			document.getElementById("offlineInfo").classList.remove("d-none");
 		},
 		refreshListClicked() {
-			SyncProvider.pull().then(this.$refs.songList.updateTable);
+			SyncProvider.pull();
 		}
 	},
 	components: {

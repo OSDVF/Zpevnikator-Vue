@@ -190,6 +190,7 @@ export default {
 				Settings.applyThemeToComponents($mainContent);
 				//Also apply tooltips
 				$mainContent.find('[data-toggle="tooltip"]').tooltip();
+				$mainContent.find('[data-toggle="popover"]').popover();
 			});
 		},
 		setOverflow() {

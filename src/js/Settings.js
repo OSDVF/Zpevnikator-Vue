@@ -323,7 +323,7 @@ var Settings = {
 		{
 			$("#notificationStatus").addClass("d-none");
 		}
-		newPrefs = document.getElementById("wakeLock").checked;
+		newPrefs.WakeLock = document.getElementById("wakeLock").checked;
 		if (!newPrefs.WakeLock&&NoSleepHelper._nosleep)
 		{
 			NoSleepHelper._nosleep.disable();

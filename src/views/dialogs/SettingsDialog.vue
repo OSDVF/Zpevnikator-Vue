@@ -90,7 +90,7 @@
             <i class="material-icons">refresh</i>&ensp;Přestáhnout aplikaci
           </a>
           <br />
-          <router-link to="/about" >
+          <router-link to="/about">
             <span data-dismiss="modal"><i class="material-icons">info</i> O aplikaci</span>
           </router-link>
         </div>
@@ -124,6 +124,9 @@ export default {
 			.modal("show")
 			.find(".selectpicker")
 			.selectpicker();
+		$(this.$el)
+			.find('[data-toggle="popover"]')
+			.popover();
 	},
 	beforeDestroy() {
 		$(this.$el)
@@ -201,7 +204,7 @@ export default {
 		},
 		wakelockNotif(event) {
 			if (event.target.checked != Settings.WakeLock)
-				UIHelpers.Dalog("Vypnutí displeje bude zabráněno jen po kliknutí na některý řádek v seznamu písní a zobrazení písně<br><small>(Omezení systému)</small>");
+				UIHelpers.Dialog("Vypnutí displeje bude zabráněno jen po kliknutí na některý řádek v seznamu písní a zobrazení písně<br><small>(Omezení systému)</small>");
 		}
 	}
 };
