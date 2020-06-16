@@ -25,5 +25,5 @@ const appInstance = new Vue({
 });
 globalManager.Vue = appInstance;
 new SyncProvider(appInstance);
-
+appInstance.stable = !location.hostname.startsWith("dev.") && location.hostname != "localhost"; //Development hostname
 appInstance.$mount('#app');
