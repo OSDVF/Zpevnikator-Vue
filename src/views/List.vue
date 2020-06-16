@@ -1,19 +1,31 @@
 <template>
   <main>
-    <div class="d-none text-success my-2" id="offlineInfo">
-      <i class="material-icons">feedback</i> Písně, které jsou zobrazeny zeleně jsou dostupné offline
-      <button class="btn btn-success btn-sm ml-2" onclick="Settings.DisplayedOfflineListInfo=true;$('#offlineInfo').hide()">
-        Rozumím
-      </button>
-    </div>
     <SongList @offline-songs-exist="offlineInfoDisplay" ref="songList" :preferences="$parent.preferences" />
-    <ReloadBtn @click="refreshListClicked"/>
+    <table class="table table-borderless w-auto">
+      <tr>
+        <td>
+          <i class="rozvoj">R</i>
+        </td>
+        <td>
+          – vytvořeno Na Rozvoji
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <strong class="text-success">Zeleně</strong>
+        </td>
+        <td>
+          – Uloženo offline
+        </td>
+      </tr>
+    </table>
+    <ReloadBtn @click="refreshListClicked" />
   </main>
 </template>
 <script>
 import SongList from "@/components/SongList";
-import FloatingActionButton from '../components/FloatingActionButton';
-import SyncProvider from "../js/databases/SyncProvider"
+import FloatingActionButton from "../components/FloatingActionButton";
+import SyncProvider from "../js/databases/SyncProvider";
 
 export default {
 	methods: {
@@ -46,3 +58,15 @@ export default {
 	}
 };
 </script>
+<style>
+i.rozvoj {
+	border: 2px solid var(--dark);
+	border-radius: 50%;
+	width: 20px;
+	height: 20px;
+	font-weight: bold;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}
+</style>

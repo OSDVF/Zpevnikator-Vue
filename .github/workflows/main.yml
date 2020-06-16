@@ -18,6 +18,10 @@ jobs:
     - name: Documentation setup
       run: npm i jsdoc vue-template-compiler jsdoc-vuejs
       continue-on-error: true
+
+    - name: Create ENV file with commit info
+      run: |
+        echo VUE_APP_COMMIT = "${{ github.event.after }}" > .env.local
       
     - name: Build
       run: npm run Build-Modern

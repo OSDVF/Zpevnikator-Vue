@@ -15,7 +15,7 @@ module.exports = {
       importWorkboxFrom: 'disabled',
       exclude: [/^images\//,'robots.txt','manifest.json','.htaccess',/\.map$/, ]
     },
-    name: process.env.VUE_APP_SHORT_NAME,
+    name: process.env.VUE_APP_NAME,
     themeColor: process.env.VUE_APP_THEME_COLOR,
     msTileColor: '#f8f9fa',
     appleMobileWebAppCapable: 'yes',

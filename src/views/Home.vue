@@ -22,18 +22,23 @@
       <hr />
       <p class="typography-subheading">To vše teď umí dorostomládežový zpěvník. Stačí jen vzít něco do ruky 🎹🎸🎤 a začít!</p>
       <div class="typography-caption p">
-        {{stable?'Stabilní':'Experimentální'}} verze {{version}} <a href='#changes' data-toggle='collapse' class="text-visible">(poslední změna {{lastUpdate}})</a>
-        <a class="p collapse" id="changes" :href="repository">
+        {{stable?'Stabilní':'Experimentální'}} verze {{version}} <a class="text-visible" data-toggle="collapse" href="#thisVersionChanges">(verze z {{currentCommitDate}})</a>
+		<a class="p collapse" id="thisVersionChanges" :href="repository">
+          <pre v-html="thisVersionChanges" class="btn-transparent d-inline-block p-3 mt-2" data-toggle="tooltip" title="Klikněte pro přesměrování na GitHub, kde se dozvíte více informací o vývoji projektu"></pre>
+        </a>
+		<br />
+        Aktuální verze aplikace je z {{lastUpdate}} <a href="#lastChanges" data-toggle='collapse' class="text-visible">(co bylo přidáno?)</a>
+        <a class="p collapse" id="lastChanges" :href="repository">
           <pre v-html="lastChanges" class="btn-transparent d-inline-block p-3 mt-2" data-toggle="tooltip" title="Klikněte pro přesměrování na GitHub, kde se dozvíte více informací o vývoji projektu"></pre>
         </a>
         <div v-if="stable">
           <br />Pokud chcete vidět nejnovější funkce, podívejte se na
           <a href="https://alpha.dorostmladez.cz" class="text-visible">Experimentální verzi</a>
         </div>
-		<div v-else>
-			<br />Pokud chcete jistotu že se nestane náhodná chyba, zkuste
+        <div v-else>
+          <br />Pokud chcete jistotu že se nestane náhodná chyba, zkuste
           <a href="https://chvaly.dorostmladez.cz" class="text-visible">Stabilní verzi</a>
-		</div>
+        </div>
       </div>
       <p class="typography-caption">
         <a href="https://dorostmladez.cz/chvaly" target="_blank" class="text-visible">Stará verze zpěvníku zde (pro staré prohlížeče)</a>
@@ -102,21 +107,34 @@
 import globalManager from "@/js/global";
 import { NetworkUtils, UIHelpers } from "@/js/Helpers";
 import Settings from "@/js/Settings";
+const pending1 = "[zjišťování...]";
+const pending2 = "Zjišťování...";
 export default {
 	name: "home",
 	data() {
-		return { lastUpdate: "[zjišťování...]", lastChanges: "Zjišťování..." };
+		return { lastUpdate: pending1, lastChanges: pending2,currentCommitDate:pending1,thisVersionChanges:pending2 };
 	},
 	created() {
 		this.version = process.env.VUE_APP_VERSION;
 		this.repository = process.env.VUE_APP_REPOSITORY;
 		this.stable = !location.hostname.startsWith("dev.") && location.hostname != "localhost"; //Development hostname
 		const _self = this;
+
+		//Last app version info fetch
 		(async () => {
 			var ghApiJson = await fetch(process.env.VUE_APP_REPOSITORY_API + (_self.stable ? "commits/stable" : "commits/master"));
 			var json = await ghApiJson.json();
 			var d = new Date(json.commit.committer.date);
 			_self.lastUpdate = d.toLocaleString();
+
+			_self.thisVersionChanges = json.commit.message;
+		})();
+		//Current version info fetch
+		(async () => {
+			var ghApiJson = await fetch(process.env.VUE_APP_REPOSITORY_API + "commits/"+process.env.VUE_APP_COMMIT);//VUE_APP_COMMIT will be injected by Github Actions
+			var json = await ghApiJson.json();
+			var d = new Date(json.commit.committer.date);
+			_self.currentCommitDate = d.toLocaleString();
 
 			_self.lastChanges = json.commit.message;
 		})();
@@ -153,7 +171,7 @@ export default {
 		addStar: function() {
 			localStorage.getItem(Settings.KeyPrefix + "likeCount") ? localStorage[Settings.KeyPrefix + "likeCount"]++ : (localStorage[Settings.KeyPrefix + "likeCount"] = 1);
 			if (localStorage[Settings.KeyPrefix + "likeCount"] < 4) {
-				fetch(process.env.VUE_APP_API_URL+"/telemetry/like.php", { method: "POST" });
+				fetch(process.env.VUE_APP_API_URL + "/telemetry/like.php", { method: "POST" });
 				$("#starNum").text(parseInt($("#starNum").text()) + 1);
 			} else {
 				UIHelpers.Message("Zas to s tím lajkováním moc nepřehánějte 😁", null, 3000);
